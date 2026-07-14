@@ -1,0 +1,34 @@
+{
+  "project_schema_version": "0.1.0",
+  "order_number": "1094811",
+  "quotation": "../quotations/1094811.json",
+  "status": "topology_review_required",
+  "quoted_component_instances": [
+    {"id": "q1-1", "family": "DFD", "model": "DFD450", "origin": "quoted", "quotation_position": 1},
+    {"id": "q2-1", "family": "DFD", "model": "DFD300", "origin": "quoted", "quotation_position": 2},
+    {"id": "q4-1", "family": "DH", "model": "DH2000-III", "origin": "quoted", "quotation_position": 4},
+    {"id": "q5-1", "family": "SVR_LT_ASSEMBLY", "model": "SVR26/LT5-I", "origin": "quoted", "quotation_position": 5}
+  ],
+  "resolved_subcomponents": [
+    {"id": "q5-svr", "family": "SVR", "model": "SVR26", "parent": "q5-1"},
+    {"id": "q5-lt", "family": "LT", "model": "LT5-I", "parent": "q5-1"}
+  ],
+  "open_design_points": [
+    {
+      "id": "ODP-1",
+      "quotation_position": 3,
+      "question": "Confirm the supply/return topology of the single DFD300-450 pipe system between both DFD units and DH2000-III.",
+      "blocks": "automatic_drying_air_routing"
+    },
+    {
+      "id": "ODP-2",
+      "question": "Confirm the physical DFD and DH piping anchors shown on the numbered review drawings.",
+      "blocks": "automatic_anchor_routing"
+    },
+    {
+      "id": "ODP-3",
+      "question": "Confirm whether catchbox and extruder are customer-existing/inferred destinations for this order.",
+      "blocks": "automatic_material_path_completion"
+    }
+  ]
+}

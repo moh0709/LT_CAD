@@ -39,6 +39,7 @@ lt-cad-validate-topology examples/topology/simple_drying_line.json
 lt-cad-validate-views component_library/manifest/views_v0.json
 lt-cad-review-svg component_library/manifest/views_v0.json dfd-family-left-side \
   component_library/previews/dfd-family-left-side.svg output/dfd-review.svg
+lt-cad-validate-quotation examples/quotations/1094811.json --instances
 pytest
 ```
 
@@ -50,6 +51,8 @@ component_library/previews/   Lightweight CAD-derived vector previews
 component_library/reviews/    Numbered port-review drawings
 docs/                         Architecture and catalogue guidance
 examples/topology/            Example system graphs
+examples/quotations/          Normalized quotation data with source provenance
+examples/projects/            Design inputs and explicit unresolved decisions
 master_library/               Link to externally stored source CAD
 rules/                        Confirmed engineering and line rules
 src/lt_cad/                   DXF inventory and rendering tools

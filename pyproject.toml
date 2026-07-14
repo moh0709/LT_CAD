@@ -23,6 +23,7 @@ lt-cad-render = "lt_cad.render:main"
 lt-cad-validate-topology = "lt_cad.topology:main"
 lt-cad-validate-views = "lt_cad.anchors:main"
 lt-cad-review-svg = "lt_cad.review:main"
+lt-cad-validate-quotation = "lt_cad.quotation:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
