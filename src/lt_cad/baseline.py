@@ -7,6 +7,7 @@ import html
 from pathlib import Path
 
 from lt_cad.layout import _nested_svg, _raster_b64
+from lt_cad.routing import rounded_orthogonal_path, route_collisions
 
 
 def _callout(number: int, cx: float, cy: float, tx: float, ty: float) -> str:
@@ -29,6 +30,29 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
     customer = html.escape(metadata.get("customer", "TBD"))
     agent = html.escape(metadata.get("agent", "TBD"))
     date = html.escape(metadata.get("date", "TBD"))
+
+    obstacles = {
+        "source": (118, 121, 23, 32),
+        "dh": (155, 62, 45, 91),
+        "dfd": (204, 103, 36, 44),
+        "ext": (268, 112, 43, 42),
+    }
+    routes = {
+        "undried": [(129.5, 121), (129.5, 75), (174, 75)],
+        "dried": [(180, 155), (180, 166), (252, 166), (252, 94), (283, 94)],
+        "vacuum_main": [(186, 56), (205, 56), (205, 67), (320, 67), (320, 139), (332, 139)],
+        "vacuum_ext": [(293, 88), (320, 88)],
+    }
+    collision_rules = {
+        "undried": {"source", "dh"},
+        "dried": {"dh"},
+        "vacuum_main": {"dh"},
+        "vacuum_ext": set(),
+    }
+    for route_id, points in routes.items():
+        collisions = route_collisions(points, obstacles, ignore=collision_rules[route_id], clearance=1)
+        if collisions:
+            raise ValueError(f"Route {route_id} crosses component borders: {collisions}")
 
     parts = [
         '<?xml version="1.0" encoding="UTF-8"?>',
@@ -60,12 +84,12 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         # Drying-air short couplings between DH and DFD.
         '<path d="M199 131 H204 M199 139 H204" fill="none" stroke="#222" stroke-width="1.1"/>',
         # Green undried material route: source to receiver above DH.
-        '<polyline points="129.5,121 129.5,75 174,75" class="route" stroke="#31D843"/>',
+        f'<path d="{rounded_orthogonal_path(routes["undried"], 4)}" class="route" stroke="#31D843"/>',
         # Magenta dried-material route below the floor and to EXT receiver.
-        '<polyline points="180,155 180,163 198,163 198,171 285,171 285,108" class="route" stroke="#D52AA3"/>',
+        f'<path d="{rounded_orthogonal_path(routes["dried"], 5)}" class="route" stroke="#D52AA3"/>',
         # Vacuum return header from both receivers to LT.
-        '<polyline points="186,56 205,56 205,67 320,67 320,139 332,139" class="route" stroke="#35C4CF" marker-end="url(#arrow-cyan)"/>',
-        '<polyline points="293,88 320,88" class="route" stroke="#35C4CF"/>',
+        f'<path d="{rounded_orthogonal_path(routes["vacuum_main"], 5)}" class="route" stroke="#35C4CF" marker-end="url(#arrow-cyan)"/>',
+        f'<path d="{rounded_orthogonal_path(routes["vacuum_ext"], 4)}" class="route" stroke="#35C4CF"/>',
         # Labels.
         '<text x="177" y="172" class="equipment">CATCHBOX</text>',
         '<text x="217" y="151" class="equipment" text-anchor="middle">DFD</text>',

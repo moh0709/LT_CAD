@@ -44,3 +44,11 @@ An approved component must define:
 AI may choose among approved components and topology patterns, but it must not invent
 connection anchors or silently add unquoted equipment.
 
+## Geometric routing contract
+
+- Pipes may not cross a component bounding box except at a declared connection zone.
+- Orthogonal route corners use a configurable bend radius; sharp 90-degree corners are
+  not emitted in released or review drawings.
+- Collision validation runs before SVG/DXF output and identifies the obstructing
+  component by stable ID.
+- Routes may pass below the common floor line where the approved template requires it.
