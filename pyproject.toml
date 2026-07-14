@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lt-cad"
+version = "0.1.0"
+description = "Open-source AI-assisted CAD designer for drying and vacuum conveying systems"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "ezdxf>=1.4,<2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8,<9",
+]
+
+[project.scripts]
+lt-cad-inventory = "lt_cad.inventory:main"
+lt-cad-render = "lt_cad.render:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
