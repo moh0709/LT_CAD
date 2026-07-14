@@ -1,0 +1,6 @@
+Mastger component library:
+https://dklabotek-my.sharepoint.com/:f:/g/personal/moi_labotek_dk/IgC8tBoj_tpxQ7K40c4Y0Xo7Af3HCNhy0wzBrGtM4eD2aPY?e=cethP7
+All components in one master file:
+Tegnings oversigt.dwg
+Tegnings oversigt.dxf
+
