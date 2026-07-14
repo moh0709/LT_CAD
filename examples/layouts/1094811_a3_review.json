@@ -1,0 +1,62 @@
+{
+  "layout_schema_version": "0.1.0",
+  "order_number": "1094811",
+  "title": "Drying and conveying system - component layout review",
+  "sheet": "A3_landscape",
+  "routing_status": "blocked_pending_review",
+  "items": [
+    {
+      "id": "q1-1",
+      "label": "DFD450",
+      "geometry_status": "registered",
+      "preview": "component_library/previews/dfd-family-left-side.svg",
+      "x": 22,
+      "y": 45,
+      "width": 72,
+      "height": 88
+    },
+    {
+      "id": "q2-1",
+      "label": "DFD300",
+      "geometry_status": "registered",
+      "preview": "component_library/previews/dfd-family-left-side.svg",
+      "x": 105,
+      "y": 45,
+      "width": 72,
+      "height": 88
+    },
+    {
+      "id": "q4-1",
+      "label": "DH2000-III",
+      "geometry_status": "registered",
+      "preview": "component_library/previews/dh-family-front.svg",
+      "x": 200,
+      "y": 28,
+      "width": 72,
+      "height": 158
+    },
+    {
+      "id": "q5-svr",
+      "label": "SVR26",
+      "geometry_status": "placeholder",
+      "x": 300,
+      "y": 58,
+      "width": 42,
+      "height": 70
+    },
+    {
+      "id": "q5-lt",
+      "label": "LT5-I",
+      "geometry_status": "placeholder",
+      "x": 360,
+      "y": 70,
+      "width": 38,
+      "height": 48
+    }
+  ],
+  "review_notes": [
+    "DFD and DH positions use registered CAD-derived family views.",
+    "SVR26 and LT5-I positions are reserved until their preferred views are registered.",
+    "No drying-air, material or vacuum lines are drawn before topology and anchors are approved."
+  ]
+}
