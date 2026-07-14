@@ -17,7 +17,12 @@
       "geometry_status": "approved_family_standard",
       "anchor_status": "needs_review",
       "anchors": [],
-      "review_markers": [],
+      "review_markers": [
+        {"id": "P1", "x": 0.337, "y": 0.965, "question": "Confirm port function, medium and direction."},
+        {"id": "P2", "x": 0.516, "y": 0.965, "question": "Confirm port function, medium and direction."},
+        {"id": "P3", "x": 0.686, "y": 0.965, "question": "Confirm port function, medium and direction."},
+        {"id": "P4", "x": 0.789, "y": 0.965, "question": "Confirm port function, medium and direction."}
+      ],
       "preview": "../previews/dfd-family-left-side.svg",
       "notes": "User-approved left-side geometry for the DFD family. Pipe anchors are intentionally unavailable until visually confirmed."
     },
@@ -32,7 +37,11 @@
       "geometry_status": "needs_review",
       "anchor_status": "needs_review",
       "anchors": [],
-      "review_markers": [],
+      "review_markers": [
+        {"id": "P1", "x": 0.215, "y": 0.930, "question": "Confirm whether this is a drying-air port, and its direction."},
+        {"id": "P2", "x": 0.730, "y": 0.915, "question": "Confirm whether this is a drying-air port, and its direction."},
+        {"id": "P3", "x": 0.500, "y": 0.020, "question": "Confirm the dried-material discharge/catchbox connection position."}
+      ],
       "preview": "../previews/dh-family-front.svg",
       "notes": "Provisional front geometry: the user described this representation as almost correct."
     }

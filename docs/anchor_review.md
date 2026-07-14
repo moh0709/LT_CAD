@@ -25,3 +25,7 @@ An approved anchor records:
 Views with `anchor_status: needs_review` must have an empty `anchors` list and cannot be
 used by automatic routing. The next review should mark each physical pipe port on the
 SVG preview and identify its medium and direction.
+
+The first review drawings use yellow/red `P1`, `P2`, etc. markers. These are visual
+candidates only. After confirmation, a marker is converted into a named engineering
+anchor; rejected markers are removed or moved.

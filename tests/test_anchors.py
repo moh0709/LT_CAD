@@ -42,3 +42,10 @@ def test_geometry_can_be_approved_before_anchors() -> None:
     assert dfd["geometry_status"] == "approved_family_standard"
     assert dfd["anchor_status"] == "needs_review"
     assert dfd["anchors"] == []
+
+
+def test_review_marker_coordinates_must_be_normalized() -> None:
+    registry = deepcopy(REGISTRY)
+    registry["views"][0]["review_markers"][0]["y"] = -0.1
+    result = validate_views(registry)
+    assert any("P1 y must be normalized" in error for error in result["errors"])

@@ -41,6 +41,22 @@ def validate_views(registry: dict[str, Any]) -> dict[str, list[str]]:
         if anchor_status == "needs_review":
             warnings.append(f"Pipe anchors require review: {view_id}")
 
+        marker_ids: set[str] = set()
+        for marker in view.get("review_markers", []):
+            marker_id = marker.get("id")
+            if not marker_id:
+                errors.append(f"{view_id} has a review marker without an id.")
+                continue
+            if marker_id in marker_ids:
+                errors.append(f"{view_id} has duplicate review marker id: {marker_id}")
+            marker_ids.add(marker_id)
+            for axis in ("x", "y"):
+                value = marker.get(axis)
+                if not isinstance(value, (int, float)) or not 0.0 <= value <= 1.0:
+                    errors.append(
+                        f"{view_id}/{marker_id} {axis} must be normalized to [0, 1]."
+                    )
+
         anchor_ids: set[str] = set()
         for anchor in anchors:
             anchor_id = anchor.get("id")

@@ -37,13 +37,17 @@ lt-cad-inventory "/path/to/Tegnings oversigt.dxf" --output output/inventory.json
 lt-cad-render "/path/to/Tegnings oversigt.dxf" svr26 output/svr26.svg
 lt-cad-validate-topology examples/topology/simple_drying_line.json
 lt-cad-validate-views component_library/manifest/views_v0.json
+lt-cad-review-svg component_library/manifest/views_v0.json dfd-family-left-side \
+  component_library/previews/dfd-family-left-side.svg output/dfd-review.svg
 pytest
 ```
 
 ## Repository layout
 
 ```text
-component_library/manifest/   Machine-readable component catalogue
+component_library/manifest/   Machine-readable component catalogue and view registry
+component_library/previews/   Lightweight CAD-derived vector previews
+component_library/reviews/    Numbered port-review drawings
 docs/                         Architecture and catalogue guidance
 examples/topology/            Example system graphs
 master_library/               Link to externally stored source CAD

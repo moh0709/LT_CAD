@@ -8,7 +8,7 @@ from pathlib import Path
 import ezdxf
 from ezdxf.addons import Importer
 from ezdxf.addons.drawing import Frontend, RenderContext, layout
-from ezdxf.addons.drawing.config import ColorPolicy, Configuration
+from ezdxf.addons.drawing.config import BackgroundPolicy, ColorPolicy, Configuration
 from ezdxf.addons.drawing.svg import SVGBackend
 
 
@@ -25,7 +25,7 @@ def render_block(source: Path, block_name: str, output: Path) -> None:
     backend = SVGBackend()
     config = Configuration(
         color_policy=ColorPolicy.BLACK,
-        custom_bg_color="#ffffff",
+        background_policy=BackgroundPolicy.WHITE,
         min_lineweight=0.15,
     )
     Frontend(RenderContext(target_doc), backend, config=config).draw_layout(
@@ -50,4 +50,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
