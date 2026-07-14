@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import html
 import json
 import re
@@ -29,6 +30,17 @@ def _nested_svg(path: Path, x: float, y: float, width: float, height: float) -> 
     )
 
 
+def _raster_b64(path: Path, x: float, y: float, width: float, height: float) -> str:
+    encoded = path.read_text(encoding="ascii").strip()
+    # Validate stored content early rather than producing a silently broken drawing.
+    base64.b64decode(encoded, validate=True)
+    return (
+        f'<image x="{x}" y="{y}" width="{width}" height="{height}" '
+        f'preserveAspectRatio="xMidYMid meet" href="data:image/png;base64,{encoded}" '
+        f'xlink:href="data:image/png;base64,{encoded}"/>'
+    )
+
+
 def validate_layout(spec: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     ids: set[str] = set()
@@ -44,7 +56,7 @@ def validate_layout(spec: dict[str, Any]) -> list[str]:
             value = item.get(key)
             if not isinstance(value, (int, float)) or value < 0:
                 errors.append(f"{item_id or 'item'} has invalid {key}.")
-        if item.get("geometry_status") not in {"registered", "placeholder"}:
+        if item.get("geometry_status") not in {"registered", "reference_raster", "placeholder"}:
             errors.append(f"{item_id or 'item'} has invalid geometry_status.")
     return errors
 
@@ -58,7 +70,7 @@ def create_layout_svg(spec: dict[str, Any], repo_root: Path, output: Path) -> No
     order = html.escape(str(spec.get("order_number", "")))
     parts = [
         '<?xml version="1.0" encoding="UTF-8"?>',
-        '<svg xmlns="http://www.w3.org/2000/svg" width="420mm" height="297mm" '
+        '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="420mm" height="297mm" '
         'viewBox="0 0 420 297">',
         '<rect width="420" height="297" fill="white"/>',
         '<style>text{font-family:Arial,sans-serif;fill:#111}.label{font-size:5px;font-weight:bold}'
@@ -68,7 +80,22 @@ def create_layout_svg(spec: dict[str, Any], repo_root: Path, output: Path) -> No
         f'<text x="15" y="14" font-size="7" font-weight="bold">{title}</text>',
         f'<text x="405" y="14" font-size="5" text-anchor="end">Order {order}</text>',
         '<line x1="15" y1="18" x2="405" y2="18" stroke="#111" stroke-width=".5"/>',
+        '<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>',
     ]
+    for connection in spec.get("connections", []):
+        points = " ".join(f'{point[0]},{point[1]}' for point in connection["points"])
+        colour = connection["colour"]
+        dash = ' stroke-dasharray="3 2"' if connection.get("status") != "confirmed" else ""
+        parts.append(
+            f'<polyline points="{points}" fill="none" stroke="{colour}" stroke-width="1.4"'
+            f'{dash} marker-end="url(#arrow)"/>'
+        )
+        if connection.get("label"):
+            lx, ly = connection.get("label_at", connection["points"][0])
+            parts.append(
+                f'<text class="meta" x="{lx}" y="{ly}" fill="{colour}" '
+                f'style="fill:{colour}">{html.escape(connection["label"])}</text>'
+            )
     for item in spec["items"]:
         x, y = item["x"], item["y"]
         width, height = item["width"], item["height"]
@@ -76,6 +103,9 @@ def create_layout_svg(spec: dict[str, Any], repo_root: Path, output: Path) -> No
         if item["geometry_status"] == "registered":
             source = repo_root / item["preview"]
             parts.append(_nested_svg(source, x, y, width, height))
+        elif item["geometry_status"] == "reference_raster":
+            source = repo_root / item["preview"]
+            parts.append(_raster_b64(source, x, y, width, height))
         else:
             parts.append(
                 f'<rect class="placeholder" x="{x}" y="{y}" width="{width}" height="{height}"/>'

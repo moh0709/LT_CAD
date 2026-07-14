@@ -10,53 +10,119 @@
       "label": "DFD450",
       "geometry_status": "registered",
       "preview": "component_library/previews/dfd-family-left-side.svg",
-      "x": 22,
-      "y": 45,
-      "width": 72,
-      "height": 88
+      "x": 18,
+      "y": 52,
+      "width": 68,
+      "height": 83
     },
     {
       "id": "q2-1",
       "label": "DFD300",
       "geometry_status": "registered",
       "preview": "component_library/previews/dfd-family-left-side.svg",
-      "x": 105,
-      "y": 45,
-      "width": 72,
-      "height": 88
+      "x": 95,
+      "y": 52,
+      "width": 68,
+      "height": 83
     },
     {
       "id": "q4-1",
       "label": "DH2000-III",
       "geometry_status": "registered",
       "preview": "component_library/previews/dh-family-front.svg",
-      "x": 200,
-      "y": 28,
-      "width": 72,
-      "height": 158
+      "x": 188,
+      "y": 35,
+      "width": 58,
+      "height": 127
     },
     {
       "id": "q5-svr",
       "label": "SVR26",
-      "geometry_status": "placeholder",
-      "x": 300,
-      "y": 58,
-      "width": 42,
-      "height": 70
+      "geometry_status": "reference_raster",
+      "preview": "component_library/raster/svr.png.b64",
+      "x": 316,
+      "y": 108,
+      "width": 22,
+      "height": 60
     },
     {
       "id": "q5-lt",
       "label": "LT5-I",
-      "geometry_status": "placeholder",
-      "x": 360,
-      "y": 70,
-      "width": 38,
-      "height": 48
+      "geometry_status": "reference_raster",
+      "preview": "component_library/raster/lt-family.png.b64",
+      "x": 374,
+      "y": 104,
+      "width": 28,
+      "height": 40
+    },
+    {
+      "id": "inferred-catchbox",
+      "label": "CATCHBOX - VERIFY",
+      "geometry_status": "reference_raster",
+      "preview": "component_library/raster/catchbox.png.b64",
+      "x": 205,
+      "y": 165,
+      "width": 28,
+      "height": 58
+    },
+    {
+      "id": "customer-ext",
+      "label": "EXT - VERIFY",
+      "geometry_status": "reference_raster",
+      "preview": "component_library/raster/extruder.png.b64",
+      "x": 305,
+      "y": 178,
+      "width": 62,
+      "height": 50
+    }
+  ],
+  "connections": [
+    {
+      "id": "drying-header-1",
+      "status": "provisional",
+      "colour": "#6b7280",
+      "label": "DFD PIPE SYSTEM - TOPOLOGY VERIFY",
+      "label_at": [110, 27],
+      "points": [[52, 52], [52, 29], [217, 29], [217, 35]]
+    },
+    {
+      "id": "drying-header-2",
+      "status": "provisional",
+      "colour": "#6b7280",
+      "points": [[129, 52], [129, 40], [228, 40], [228, 35]]
+    },
+    {
+      "id": "dh-catchbox",
+      "status": "confirmed",
+      "colour": "#D52AA3",
+      "points": [[217, 158], [217, 169]]
+    },
+    {
+      "id": "catchbox-svr",
+      "status": "provisional",
+      "colour": "#D52AA3",
+      "label": "DRIED MATERIAL",
+      "label_at": [250, 190],
+      "points": [[233, 194], [276, 194], [276, 138], [316, 138]]
+    },
+    {
+      "id": "svr-lt-vacuum",
+      "status": "confirmed",
+      "colour": "#35C4CF",
+      "label": "VACUUM AIR",
+      "label_at": [340, 124],
+      "points": [[338, 132], [360, 132], [360, 124], [374, 124]]
+    },
+    {
+      "id": "svr-ext-discharge",
+      "status": "provisional",
+      "colour": "#D52AA3",
+      "points": [[327, 168], [327, 182]]
     }
   ],
   "review_notes": [
     "DFD and DH positions use registered CAD-derived family views.",
-    "SVR26 and LT5-I positions are reserved until their preferred views are registered.",
-    "No drying-air, material or vacuum lines are drawn before topology and anchors are approved."
+    "SVR, LT, catchbox and EXT use the supplied reference graphics; catchbox and EXT inclusion must be confirmed.",
+    "Grey dashed drying lines and magenta dashed material lines are provisional; turquoise vacuum direction is SVR to LT."
   ]
 }
