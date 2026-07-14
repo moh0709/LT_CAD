@@ -21,6 +21,7 @@ dev = [
 lt-cad-inventory = "lt_cad.inventory:main"
 lt-cad-render = "lt_cad.render:main"
 lt-cad-validate-topology = "lt_cad.topology:main"
+lt-cad-validate-views = "lt_cad.anchors:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,0 +1,40 @@
+{
+  "view_registry_version": "0.1.0",
+  "coordinate_system": {
+    "type": "normalized_2d",
+    "origin": "bottom_left",
+    "range": [0.0, 1.0]
+  },
+  "views": [
+    {
+      "id": "dfd-family-left-side",
+      "family": "DFD",
+      "models": ["DFD300", "DFD450"],
+      "view": "left_side",
+      "source_file": "DFD300-450_side_left.dwg",
+      "source_block": "A$C7B2D2076",
+      "native_extents_mm": {"width": 1283.000, "height": 1562.500},
+      "geometry_status": "approved_family_standard",
+      "anchor_status": "needs_review",
+      "anchors": [],
+      "review_markers": [],
+      "preview": "../previews/dfd-family-left-side.svg",
+      "notes": "User-approved left-side geometry for the DFD family. Pipe anchors are intentionally unavailable until visually confirmed."
+    },
+    {
+      "id": "dh-family-front",
+      "family": "DH",
+      "models": ["DH800-III"],
+      "view": "front",
+      "source_file": "DH800-III_front_160.dwg",
+      "source_block": "A$C648D7515",
+      "native_extents_mm": {"width": 1178.761, "height": 3194.499},
+      "geometry_status": "needs_review",
+      "anchor_status": "needs_review",
+      "anchors": [],
+      "review_markers": [],
+      "preview": "../previews/dh-family-front.svg",
+      "notes": "Provisional front geometry: the user described this representation as almost correct."
+    }
+  ]
+}

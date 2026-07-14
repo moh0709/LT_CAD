@@ -22,8 +22,10 @@ Component Catalogue V0 validates that the supplied master DXF can be opened dire
 - 97 layers
 - 999 block insertions referencing 575 unique blocks
 
-Candidate DFD, DH, SVR, LT and WAM blocks have been identified. They remain
-`needs_review` until their preferred view, insertion point and pipe anchors are approved.
+Candidate DFD, DH, SVR, LT and WAM blocks have been identified. The supplied DFD300/450
+left-side geometry is registered as the DFD family standard. The DH800-III front view is
+provisional. Pipe anchors remain `needs_review`, so automatic routing cannot silently use
+an unverified connection point.
 
 ## Quick start
 
@@ -34,6 +36,7 @@ pip install -e '.[dev]'
 lt-cad-inventory "/path/to/Tegnings oversigt.dxf" --output output/inventory.json
 lt-cad-render "/path/to/Tegnings oversigt.dxf" svr26 output/svr26.svg
 lt-cad-validate-topology examples/topology/simple_drying_line.json
+lt-cad-validate-views component_library/manifest/views_v0.json
 pytest
 ```
 
