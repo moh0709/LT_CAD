@@ -1,0 +1,17 @@
+{
+  "order_number": "EXAMPLE",
+  "components": [
+    {"id": "dh-1", "family": "DH", "model": "DH2000-III", "origin": "quoted"},
+    {"id": "catchbox-1", "family": "CATCHBOX", "model": null, "origin": "inferred"},
+    {"id": "svr-1", "family": "SVR", "model": "SVR26", "origin": "quoted"},
+    {"id": "lt-1", "family": "LT", "model": "LT5", "origin": "quoted"},
+    {"id": "ext-1", "family": "EXT", "model": null, "origin": "customer_existing"}
+  ],
+  "connections": [
+    {"source": "dh-1", "target": "catchbox-1", "medium": "gravity_dried_material"},
+    {"source": "catchbox-1", "target": "svr-1", "medium": "dried_material"},
+    {"source": "svr-1", "target": "lt-1", "medium": "vacuum_air"},
+    {"source": "svr-1", "target": "ext-1", "medium": "discharge"}
+  ]
+}
+

@@ -1,0 +1,83 @@
+{
+  "rules_version": "0.1.0",
+  "line_classes": {
+    "vacuum_air": {
+      "colour": "#35C4CF",
+      "description": "Vacuum conveying air",
+      "confirmed_direction": "SVR to LT"
+    },
+    "dried_material": {
+      "colour": "#D52AA3",
+      "description": "Dried material under vacuum conveying"
+    },
+    "undried_material": {
+      "colour": "#42A846",
+      "description": "Undried material"
+    },
+    "gravity_dried_material": {
+      "colour": "#D52AA3",
+      "description": "Dried material from DH into catchbox"
+    },
+    "discharge": {
+      "colour": "#D52AA3",
+      "description": "Receiver discharge into destination equipment"
+    }
+  },
+  "connection_rules": [
+    {
+      "id": "vacuum-return",
+      "medium": "vacuum_air",
+      "source_families": ["SVR"],
+      "target_families": ["LT"],
+      "status": "confirmed"
+    },
+    {
+      "id": "hopper-to-catchbox",
+      "medium": "gravity_dried_material",
+      "source_families": ["DH"],
+      "target_families": ["CATCHBOX"],
+      "status": "confirmed"
+    },
+    {
+      "id": "catchbox-to-receiver",
+      "medium": "dried_material",
+      "source_families": ["CATCHBOX"],
+      "target_families": ["SVR"],
+      "status": "confirmed"
+    },
+    {
+      "id": "receiver-to-extruder",
+      "medium": "discharge",
+      "source_families": ["SVR"],
+      "target_families": ["EXT"],
+      "status": "confirmed"
+    }
+  ],
+  "node_requirements": [
+    {
+      "family": "CATCHBOX",
+      "incoming": [
+        {"medium": "gravity_dried_material", "other_family": "DH"}
+      ],
+      "outgoing": [
+        {"medium": "dried_material", "other_family": "SVR"}
+      ]
+    },
+    {
+      "family": "SVR",
+      "outgoing": [
+        {"medium": "vacuum_air", "other_family": "LT"},
+        {"medium": "discharge", "other_family": "EXT"}
+      ]
+    }
+  ],
+  "symbol_rules": [
+    {
+      "family": "LT",
+      "models": ["LT3", "LT4", "LT5", "LT6"],
+      "graphic_policy": "shared_symbol_model_specific_label",
+      "status": "confirmed"
+    }
+  ]
+}
+

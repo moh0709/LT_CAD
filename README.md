@@ -33,6 +33,7 @@ source .venv/bin/activate
 pip install -e '.[dev]'
 lt-cad-inventory "/path/to/Tegnings oversigt.dxf" --output output/inventory.json
 lt-cad-render "/path/to/Tegnings oversigt.dxf" svr26 output/svr26.svg
+lt-cad-validate-topology examples/topology/simple_drying_line.json
 pytest
 ```
 
@@ -41,7 +42,9 @@ pytest
 ```text
 component_library/manifest/   Machine-readable component catalogue
 docs/                         Architecture and catalogue guidance
+examples/topology/            Example system graphs
 master_library/               Link to externally stored source CAD
+rules/                        Confirmed engineering and line rules
 src/lt_cad/                   DXF inventory and rendering tools
 tests/                        Automated checks
 ```
@@ -50,4 +53,3 @@ tests/                        Automated checks
 
 The project licence is intentionally pending owner confirmation. GPL-3.0-or-later is
 recommended if GNU LibreDWG is distributed as an integrated part of the application.
-
