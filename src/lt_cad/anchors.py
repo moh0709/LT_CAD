@@ -14,6 +14,17 @@ VALID_ANCHOR_STATUSES = {"needs_review", APPROVED_ANCHOR_STATUS}
 VALID_DIRECTIONS = {"in", "out", "bidirectional"}
 
 
+def anchor_point(
+    anchor: dict[str, Any],
+    bounds: tuple[float, float, float, float],
+    mirror_x: bool = False,
+) -> tuple[float, float]:
+    """Transform a normalized bottom-left anchor to SVG top-left sheet coordinates."""
+    x, y, width, height = bounds
+    normalized_x = 1.0 - anchor["x"] if mirror_x else anchor["x"]
+    return (x + normalized_x * width, y + (1.0 - anchor["y"]) * height)
+
+
 def validate_views(registry: dict[str, Any]) -> dict[str, list[str]]:
     """Return validation errors and warnings for a component-view registry."""
     errors: list[str] = []

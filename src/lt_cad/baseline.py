@@ -8,6 +8,7 @@ from pathlib import Path
 
 from lt_cad.layout import _nested_svg, _raster_b64
 from lt_cad.routing import rounded_orthogonal_path, route_collisions
+from lt_cad.anchors import anchor_point
 
 
 def _callout(number: int, cx: float, cy: float, tx: float, ty: float) -> str:
@@ -31,6 +32,18 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
     agent = html.escape(metadata.get("agent", "TBD"))
     date = html.escape(metadata.get("date", "TBD"))
 
+    svr_material = {"x": 0.0, "y": 0.625}
+    svr_vacuum = {"x": 0.311, "y": 0.925}
+    catchbox_upper = {"x": 1.0, "y": 0.354}
+    dh_svr_bounds = (174, 48, 12, 32)
+    ext_svr_bounds = (283, 80, 10, 28)
+    catchbox_bounds = (172, 137, 16, 30)
+    dh_material_port = anchor_point(svr_material, dh_svr_bounds)
+    dh_vacuum_port = anchor_point(svr_vacuum, dh_svr_bounds)
+    ext_material_port = anchor_point(svr_material, ext_svr_bounds)
+    ext_vacuum_port = anchor_point(svr_vacuum, ext_svr_bounds)
+    catchbox_material_port = anchor_point(catchbox_upper, catchbox_bounds)
+
     obstacles = {
         "source": (118, 121, 23, 32),
         "dh": (155, 62, 45, 91),
@@ -38,10 +51,10 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         "ext": (268, 112, 43, 42),
     }
     routes = {
-        "undried": [(129.5, 121), (129.5, 75), (174, 75)],
-        "dried": [(180, 155), (180, 166), (252, 166), (252, 94), (283, 94)],
-        "vacuum_main": [(186, 56), (205, 56), (205, 67), (320, 67), (320, 139), (332, 139)],
-        "vacuum_ext": [(293, 88), (320, 88)],
+        "undried": [(129.5, 121), (129.5, dh_material_port[1]), dh_material_port],
+        "dried": [catchbox_material_port, (198, catchbox_material_port[1]), (198, 166), (252, 166), (252, ext_material_port[1]), ext_material_port],
+        "vacuum_main": [dh_vacuum_port, (165, dh_vacuum_port[1]), (165, 42), (320, 42), (320, 139), (332, 139)],
+        "vacuum_ext": [ext_vacuum_port, (275, ext_vacuum_port[1]), (275, 67), (320, 67)],
     }
     collision_rules = {
         "undried": {"source", "dh"},
@@ -63,7 +76,7 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         '.equipment{font-size:4px;font-weight:bold}.small{font-size:3px}.legend{font-size:3.3px}'
         '.callout-circle{fill:white;stroke:#ff3030;stroke-width:.35}.callout-line{stroke:#ff3030;stroke-width:.35}'
         '.callout-number{font-size:4px;fill:#ff3030;text-anchor:middle}.title{font-size:4.5px}'
-        '.route{fill:none;stroke-width:1;stroke-linejoin:round}.ground{stroke:#111;stroke-width:.45}</style>',
+        '.route{fill:none;stroke-width:2.5;stroke-linejoin:round}.ground{stroke:#111;stroke-width:.45}</style>',
         '<defs><marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#35C4CF"/></marker></defs>',
         # Floor and hatch.
         '<line x1="76" y1="154" x2="362" y2="154" class="ground"/>',

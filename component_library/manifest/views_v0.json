@@ -44,6 +44,42 @@
       ],
       "preview": "../previews/dh-family-front.svg",
       "notes": "Provisional front geometry: the user described this representation as almost correct."
+    },
+    {
+      "id": "svr-reference-front",
+      "family": "SVR",
+      "models": ["SVR8", "SVR26"],
+      "view": "front_reference",
+      "source_file": "SVR (2).png",
+      "source_block": null,
+      "native_extents_mm": null,
+      "geometry_status": "needs_review",
+      "anchor_status": "approved",
+      "anchors": [
+        {"id": "material-side", "medium": "material", "direction": "bidirectional", "side": "left", "x": 0.0, "y": 0.625, "nominal_draw_width": 2.5},
+        {"id": "vacuum-top", "medium": "vacuum_air", "direction": "bidirectional", "side": "left", "x": 0.311, "y": 0.925, "nominal_draw_width": 2.5}
+      ],
+      "review_markers": [],
+      "preview": "../raster/svr.png.b64",
+      "notes": "Anchor positions approved from the red material and cyan vacuum port review image. Horizontal mirroring is permitted."
+    },
+    {
+      "id": "catchbox-reference-side",
+      "family": "CATCHBOX",
+      "models": ["CATCHBOX"],
+      "view": "side_reference",
+      "source_file": "catchbox.png",
+      "source_block": null,
+      "native_extents_mm": null,
+      "geometry_status": "needs_review",
+      "anchor_status": "approved",
+      "anchors": [
+        {"id": "material-upper", "medium": "material", "direction": "bidirectional", "side": "right", "x": 1.0, "y": 0.354, "nominal_draw_width": 2.5},
+        {"id": "material-lower", "medium": "material", "direction": "bidirectional", "side": "right", "x": 1.0, "y": 0.212, "nominal_draw_width": 2.5}
+      ],
+      "review_markers": [],
+      "preview": "../raster/catchbox.png.b64",
+      "notes": "Two material connection points approved from the red port review image. Horizontal mirroring is permitted."
     }
   ]
 }

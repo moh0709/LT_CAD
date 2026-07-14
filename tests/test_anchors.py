@@ -2,7 +2,7 @@ import json
 from copy import deepcopy
 from pathlib import Path
 
-from lt_cad.anchors import validate_views
+from lt_cad.anchors import anchor_point, validate_views
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,3 +49,10 @@ def test_review_marker_coordinates_must_be_normalized() -> None:
     registry["views"][0]["review_markers"][0]["y"] = -0.1
     result = validate_views(registry)
     assert any("P1 y must be normalized" in error for error in result["errors"])
+
+
+def test_anchor_point_mirrors_horizontally() -> None:
+    anchor = {"x": 0.2, "y": 0.75}
+    bounds = (10, 20, 100, 200)
+    assert anchor_point(anchor, bounds) == (30, 70)
+    assert anchor_point(anchor, bounds, mirror_x=True) == (90, 70)

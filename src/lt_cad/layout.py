@@ -30,15 +30,24 @@ def _nested_svg(path: Path, x: float, y: float, width: float, height: float) -> 
     )
 
 
-def _raster_b64(path: Path, x: float, y: float, width: float, height: float) -> str:
+def _raster_b64(
+    path: Path,
+    x: float,
+    y: float,
+    width: float,
+    height: float,
+    mirror_x: bool = False,
+) -> str:
     encoded = path.read_text(encoding="ascii").strip()
     # Validate stored content early rather than producing a silently broken drawing.
     base64.b64decode(encoded, validate=True)
-    return (
-        f'<image x="{x}" y="{y}" width="{width}" height="{height}" '
+    image = (
+        f'<image x="0" y="0" width="{width}" height="{height}" '
         f'preserveAspectRatio="xMidYMid meet" href="data:image/png;base64,{encoded}" '
         f'xlink:href="data:image/png;base64,{encoded}"/>'
     )
+    transform = f"translate({x + width:g} {y:g}) scale(-1 1)" if mirror_x else f"translate({x:g} {y:g})"
+    return f'<g transform="{transform}">{image}</g>'
 
 
 def validate_layout(spec: dict[str, Any]) -> list[str]:

@@ -22,3 +22,9 @@ def test_route_around_machine_is_clear() -> None:
     obstacles = {"ext": (20, 20, 30, 30)}
     route = [(10, 60), (15, 60), (15, 10), (60, 10)]
     assert route_collisions(route, obstacles, clearance=2) == []
+
+
+def test_port_route_starts_horizontally_before_bend() -> None:
+    route = [(20, 30), (30, 30), (30, 50)]
+    assert route[0][1] == route[1][1]
+    assert "Q 30 30" in rounded_orthogonal_path(route, radius=4)
