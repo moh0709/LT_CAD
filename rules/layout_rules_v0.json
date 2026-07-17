@@ -1,0 +1,38 @@
+{
+  "layout_rules_version": "0.1.0",
+  "sheet": {
+    "format": "A3_landscape",
+    "width_mm": 420,
+    "height_mm": 297
+  },
+  "grid": {
+    "unit_mm": 5,
+    "visible_in_final": false,
+    "debug_overlay_supported": true
+  },
+  "component_size_policies": {
+    "SVR": {
+      "policy": "fixed_sheet_box",
+      "width_mm": 15,
+      "height_mm": 40,
+      "applies_to_all_models": true
+    }
+  },
+  "mounting_rules": [
+    {
+      "child_family": "SVR",
+      "host_families": ["DH", "EXT"],
+      "contact": "child_bottom_to_host_top",
+      "horizontal_alignment": "center",
+      "gap_mm": 0,
+      "required": true
+    }
+  ],
+  "orientation_rules": [
+    {
+      "family": "SVR",
+      "policy": "mirror_about_vertical_axis_to_face_incoming_pipe",
+      "transform_component_and_anchors_together": true
+    }
+  ]
+}

@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 from pathlib import Path
 
 from lt_cad.layout import _nested_svg, _raster_b64
 from lt_cad.routing import rounded_orthogonal_path, route_collisions
 from lt_cad.anchors import anchor_point
+from lt_cad.grid import Box, Grid, validate_top_mount
 
 
 def _callout(number: int, cx: float, cy: float, tx: float, ty: float) -> str:
@@ -20,8 +22,8 @@ def _callout(number: int, cx: float, cy: float, tx: float, ty: float) -> str:
 
 
 def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str]) -> None:
-    def raster(path: str, x: float, y: float, width: float, height: float) -> str:
-        return _raster_b64(repo_root / path, x, y, width, height)
+    def raster(path: str, box: Box, mirror_x: bool = False) -> str:
+        return _raster_b64(repo_root / path, *box.tuple(), mirror_x=mirror_x)
 
     def cad(path: str, x: float, y: float, width: float, height: float) -> str:
         return _nested_svg(repo_root / path, x, y, width, height)
@@ -32,35 +34,51 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
     agent = html.escape(metadata.get("agent", "TBD"))
     date = html.escape(metadata.get("date", "TBD"))
 
-    svr_material = {"x": 0.0, "y": 0.625}
-    svr_vacuum = {"x": 0.311, "y": 0.925}
+    layout_rules = json.loads(
+        (repo_root / "rules" / "layout_rules_v0.json").read_text(encoding="utf-8")
+    )
+    grid = Grid(layout_rules["grid"]["unit_mm"])
+    svr_policy = layout_rules["component_size_policies"]["SVR"]
+    svr_fixed_size = (svr_policy["width_mm"], svr_policy["height_mm"])
+    boxes = {
+        "source": grid.box(120, 120, 25, 35),
+        "dh": grid.box(155, 60, 45, 95),
+        "dfd": grid.box(205, 105, 35, 45),
+        "catchbox": grid.box(170, 135, 20, 35),
+        "ext": grid.box(270, 110, 45, 45),
+        "lt": grid.box(335, 130, 15, 25),
+    }
+    boxes["dh_svr"] = grid.mounted_on_top(boxes["dh"], *svr_fixed_size)
+    boxes["ext_svr"] = grid.mounted_on_top(boxes["ext"], *svr_fixed_size)
+    for child_id, host_id in (("dh_svr", "dh"), ("ext_svr", "ext")):
+        mount_errors = validate_top_mount(boxes[child_id], boxes[host_id])
+        if mount_errors:
+            raise ValueError(f"{child_id} mounting invalid: {mount_errors}")
+
+    # Calibrated to visible nozzle endpoints in the canonical 225 x 616 SVR raster.
+    svr_material = {"x": 0.844, "y": 0.424}
+    svr_vacuum = {"x": 0.978, "y": 0.943}
     catchbox_upper = {"x": 1.0, "y": 0.354}
-    dh_svr_bounds = (174, 48, 12, 32)
-    ext_svr_bounds = (283, 80, 10, 28)
-    catchbox_bounds = (172, 137, 16, 30)
-    dh_material_port = anchor_point(svr_material, dh_svr_bounds)
-    dh_vacuum_port = anchor_point(svr_vacuum, dh_svr_bounds)
-    ext_material_port = anchor_point(svr_material, ext_svr_bounds)
-    ext_vacuum_port = anchor_point(svr_vacuum, ext_svr_bounds)
-    catchbox_material_port = anchor_point(catchbox_upper, catchbox_bounds)
+    dh_material_port = anchor_point(svr_material, boxes["dh_svr"].tuple(), mirror_x=True)
+    dh_vacuum_port = anchor_point(svr_vacuum, boxes["dh_svr"].tuple(), mirror_x=True)
+    ext_material_port = anchor_point(svr_material, boxes["ext_svr"].tuple(), mirror_x=True)
+    ext_vacuum_port = anchor_point(svr_vacuum, boxes["ext_svr"].tuple(), mirror_x=True)
+    catchbox_material_port = anchor_point(catchbox_upper, boxes["catchbox"].tuple())
 
     obstacles = {
-        "source": (118, 121, 23, 32),
-        "dh": (155, 62, 45, 91),
-        "dfd": (204, 103, 36, 44),
-        "ext": (268, 112, 43, 42),
+        key: box.tuple() for key, box in boxes.items()
     }
     routes = {
-        "undried": [(129.5, 121), (129.5, dh_material_port[1]), dh_material_port],
-        "dried": [catchbox_material_port, (198, catchbox_material_port[1]), (198, 166), (252, 166), (252, ext_material_port[1]), ext_material_port],
-        "vacuum_main": [dh_vacuum_port, (165, dh_vacuum_port[1]), (165, 42), (320, 42), (320, 139), (332, 139)],
-        "vacuum_ext": [ext_vacuum_port, (275, ext_vacuum_port[1]), (275, 67), (320, 67)],
+        "undried": [(132.5, 120), (132.5, dh_material_port[1]), dh_material_port],
+        "dried": [catchbox_material_port, (200, catchbox_material_port[1]), (200, 175), (255, 175), (255, ext_material_port[1]), ext_material_port],
+        "vacuum_main": [dh_vacuum_port, (160, dh_vacuum_port[1]), (160, 15), (325, 15), (325, 142.5), (335, 142.5)],
+        "vacuum_ext": [ext_vacuum_port, (275, ext_vacuum_port[1]), (275, 55), (325, 55)],
     }
     collision_rules = {
-        "undried": {"source", "dh"},
-        "dried": {"dh"},
-        "vacuum_main": {"dh"},
-        "vacuum_ext": set(),
+        "undried": {"source", "dh_svr"},
+        "dried": {"catchbox", "ext_svr"},
+        "vacuum_main": {"dh_svr", "lt"},
+        "vacuum_ext": {"ext_svr"},
     }
     for route_id, points in routes.items():
         collisions = route_collisions(points, obstacles, ignore=collision_rules[route_id], clearance=1)
@@ -72,6 +90,7 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
         'width="420mm" height="297mm" viewBox="0 0 420 297">',
         '<rect width="420" height="297" fill="white"/>',
+        ('<g opacity=".18" stroke="#6aa9d8" stroke-width=".2">' + ''.join(f'<path d="M {x} 10 V 180"/>' for x in range(75, 366, 5)) + ''.join(f'<path d="M 75 {y} H 365"/>' for y in range(10, 181, 5)) + '</g>') if metadata.get("show_grid") == "true" else '',
         '<style>text{font-family:Arial,sans-serif;fill:#111}.component path{vector-effect:non-scaling-stroke;stroke-width:.28!important}'
         '.equipment{font-size:4px;font-weight:bold}.small{font-size:3px}.legend{font-size:3.3px}'
         '.callout-circle{fill:white;stroke:#ff3030;stroke-width:.35}.callout-line{stroke:#ff3030;stroke-width:.35}'
@@ -79,23 +98,23 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         '.route{fill:none;stroke-width:2.5;stroke-linejoin:round}.ground{stroke:#111;stroke-width:.45}</style>',
         '<defs><marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#35C4CF"/></marker></defs>',
         # Floor and hatch.
-        '<line x1="76" y1="154" x2="362" y2="154" class="ground"/>',
+        '<line x1="75" y1="155" x2="365" y2="155" class="ground"/>',
         '<path d="M78 154 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6" stroke="#777" stroke-width=".3" fill="none"/>',
         '<text x="88" y="145" font-size="6">±3</text>',
         # Undried material source bin.
-        '<rect x="118" y="121" width="23" height="32" fill="none" stroke="#111" stroke-width=".45"/>',
-        '<path d="M118 133 h23 M118 137 h23 M118 141 h23 M118 145 h23 M118 149 h23" stroke="#31d843" stroke-width="1.5"/>',
-        '<line x1="129.5" y1="111" x2="129.5" y2="151" stroke="#111" stroke-width=".8"/>',
+        '<rect x="120" y="120" width="25" height="35" fill="none" stroke="#111" stroke-width=".45"/>',
+        '<path d="M120 133 h25 M120 138 h25 M120 143 h25 M120 148 h25" stroke="#31d843" stroke-width="1.5"/>',
+        '<line x1="132.5" y1="110" x2="132.5" y2="153" stroke="#111" stroke-width=".8"/>',
         # Confirmed/reference components.
-        cad("component_library/previews/dh-family-front.svg", 155, 62, 45, 91),
-        cad("component_library/previews/dfd-family-left-side.svg", 204, 103, 36, 44),
-        raster("component_library/raster/catchbox.png.b64", 172, 137, 16, 30),
-        raster("component_library/raster/svr.png.b64", 174, 48, 12, 32),
-        raster("component_library/raster/extruder.png.b64", 268, 112, 43, 42),
-        raster("component_library/raster/svr.png.b64", 283, 80, 10, 28),
-        raster("component_library/raster/lt-family.png.b64", 332, 130, 14, 22),
+        cad("component_library/previews/dh-family-front.svg", *boxes["dh"].tuple()),
+        cad("component_library/previews/dfd-family-left-side.svg", *boxes["dfd"].tuple()),
+        raster("component_library/raster/catchbox.png.b64", boxes["catchbox"]),
+        raster("component_library/raster/svr.png.b64", boxes["dh_svr"], mirror_x=True),
+        raster("component_library/raster/extruder.png.b64", boxes["ext"]),
+        raster("component_library/raster/svr.png.b64", boxes["ext_svr"], mirror_x=True),
+        raster("component_library/raster/lt-family.png.b64", boxes["lt"]),
         # Drying-air short couplings between DH and DFD.
-        '<path d="M199 131 H204 M199 139 H204" fill="none" stroke="#222" stroke-width="1.1"/>',
+        '<path d="M200 132 H205 M200 140 H205" fill="none" stroke="#222" stroke-width="1.1"/>',
         # Green undried material route: source to receiver above DH.
         f'<path d="{rounded_orthogonal_path(routes["undried"], 4)}" class="route" stroke="#31D843"/>',
         # Magenta dried-material route below the floor and to EXT receiver.
@@ -104,11 +123,11 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         f'<path d="{rounded_orthogonal_path(routes["vacuum_main"], 5)}" class="route" stroke="#35C4CF" marker-end="url(#arrow-cyan)"/>',
         f'<path d="{rounded_orthogonal_path(routes["vacuum_ext"], 4)}" class="route" stroke="#35C4CF"/>',
         # Labels.
-        '<text x="177" y="172" class="equipment">CATCHBOX</text>',
-        '<text x="217" y="151" class="equipment" text-anchor="middle">DFD</text>',
-        '<text x="177" y="151" class="equipment" text-anchor="middle">DH</text>',
-        '<text x="289" y="149" class="equipment" text-anchor="middle">EXT 1</text>',
-        '<text x="339" y="157" class="equipment" text-anchor="middle">LT</text>',
+        '<text x="180" y="176" class="equipment" text-anchor="middle">CATCHBOX</text>',
+        '<text x="222.5" y="154" class="equipment" text-anchor="middle">DFD</text>',
+        '<text x="177.5" y="154" class="equipment" text-anchor="middle">DH</text>',
+        '<text x="292.5" y="154" class="equipment" text-anchor="middle">EXT 1</text>',
+        '<text x="342.5" y="160" class="equipment" text-anchor="middle">LT</text>',
         # Red item callouts matching the baseline convention.
         _callout(1, 238, 96, 225, 112),
         _callout(2, 160, 84, 168, 105),
@@ -159,6 +178,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--customer", default="TBD")
     parser.add_argument("--agent", default="TBD")
     parser.add_argument("--date", default="TBD")
+    parser.add_argument("--show-grid", action="store_true")
     return parser
 
 
@@ -173,6 +193,7 @@ def main() -> None:
             "customer": args.customer,
             "agent": args.agent,
             "date": args.date,
+            "show_grid": "true" if args.show_grid else "false",
         },
     )
 

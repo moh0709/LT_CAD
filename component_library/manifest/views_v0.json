@@ -55,13 +55,15 @@
       "native_extents_mm": null,
       "geometry_status": "needs_review",
       "anchor_status": "approved",
+      "sheet_size_policy": {"type": "fixed", "width_mm": 15, "height_mm": 40},
+      "allowed_transformations": ["mirror_about_vertical_axis"],
       "anchors": [
-        {"id": "material-side", "medium": "material", "direction": "bidirectional", "side": "left", "x": 0.0, "y": 0.625, "nominal_draw_width": 2.5},
-        {"id": "vacuum-top", "medium": "vacuum_air", "direction": "bidirectional", "side": "left", "x": 0.311, "y": 0.925, "nominal_draw_width": 2.5}
+        {"id": "material-side", "medium": "material", "direction": "bidirectional", "side": "right", "x": 0.844, "y": 0.424, "nominal_draw_width": 2.5},
+        {"id": "vacuum-top", "medium": "vacuum_air", "direction": "bidirectional", "side": "right", "x": 0.978, "y": 0.943, "nominal_draw_width": 2.5}
       ],
       "review_markers": [],
       "preview": "../raster/svr.png.b64",
-      "notes": "Anchor positions approved from the red material and cyan vacuum port review image. Horizontal mirroring is permitted."
+      "notes": "Canonical reference has right-facing ports. Anchor positions are approved from the material/vacuum port review. Horizontal mirroring switches both ports to the left."
     },
     {
       "id": "catchbox-reference-side",

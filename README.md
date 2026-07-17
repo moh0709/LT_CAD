@@ -42,6 +42,7 @@ lt-cad-review-svg component_library/manifest/views_v0.json dfd-family-left-side 
 lt-cad-validate-quotation examples/quotations/1094811.json --instances
 lt-cad-layout examples/layouts/1094811_a3_review.json output/1094811-layout.svg
 lt-cad-baseline output/standard-baseline.svg --order-number 1094222 --revision R01
+lt-cad-baseline output/standard-grid-review.svg --show-grid
 pytest
 ```
 
