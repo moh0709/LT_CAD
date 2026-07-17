@@ -44,7 +44,12 @@ def test_machine_readable_svr_policy_matches_mount_contract() -> None:
     assert mounts["DH"]["horizontal_alignment"] == "center"
     assert mounts["DH"]["host_mounting_plane_offset_from_box_top_mm"] == 10
     assert mounts["EXT"]["host_mounting_plane_offset_from_box_top_mm"] == 0
+    dh_requirement = rules["component_requirements"]["DH"]
+    assert dh_requirement["frame_required"] is True
+    assert dh_requirement["applies_to_all_models"] is True
+    assert dh_requirement["placement"] == "frame_bottom_on_floor_line"
     circuit = rules["process_air_circuit"]
+    assert circuit["applies_to_all_DFD_DH_models"] is True
     assert circuit["dfd_connection_face"] == "top"
     assert circuit["dh_connection_face"] == "side_toward_dfd"
     assert circuit["horizontal_segment_policy"] == "stretch_to_machine_spacing"

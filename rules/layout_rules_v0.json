@@ -18,6 +18,14 @@
       "applies_to_all_models": true
     }
   },
+  "component_requirements": {
+    "DH": {
+      "frame_required": true,
+      "applies_to_all_models": true,
+      "placement": "frame_bottom_on_floor_line",
+      "geometry_scope": "complete_model_space_assembly"
+    }
+  },
   "mounting_rules": [
     {
       "child_family": "SVR",
@@ -48,6 +56,7 @@
   "process_air_circuit": {
     "id": "DFD_DH_STANDARD",
     "medium": "drying_air",
+    "applies_to_all_DFD_DH_models": true,
     "routes": {
       "supply": {"direction": "DFD_to_DH"},
       "return": {"direction": "DH_to_DFD"}
