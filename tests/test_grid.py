@@ -44,6 +44,11 @@ def test_machine_readable_svr_policy_matches_mount_contract() -> None:
     assert mounts["DH"]["horizontal_alignment"] == "center"
     assert mounts["DH"]["host_mounting_plane_offset_from_box_top_mm"] == 10
     assert mounts["EXT"]["host_mounting_plane_offset_from_box_top_mm"] == 0
+    circuit = rules["process_air_circuit"]
+    assert circuit["dfd_connection_face"] == "top"
+    assert circuit["dh_connection_face"] == "side_toward_dfd"
+    assert circuit["horizontal_segment_policy"] == "stretch_to_machine_spacing"
+    assert circuit["flow_arrows_required"] is True
 
 
 def test_mirrored_svr_material_anchor_meets_visible_left_nozzle() -> None:

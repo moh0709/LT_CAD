@@ -8,8 +8,8 @@ unverified port.
 
 | View | Geometry | Pipe anchors |
 |---|---|---|
-| DFD300/450 left side | Approved family standard | Needs review |
-| DH800-III front | Needs review | Needs review |
+| DFD300/450 left side | Approved family standard | Approved |
+| DH800-III front with frame | Approved family standard | Approved |
 
 Coordinates are stored relative to the component bounding box: `(0, 0)` is bottom-left
 and `(1, 1)` is top-right. This makes the same reviewed anchor reusable when a component
@@ -23,9 +23,18 @@ An approved anchor records:
 - normalized `x` and `y` coordinates.
 
 Views with `anchor_status: needs_review` must have an empty `anchors` list and cannot be
-used by automatic routing. The next review should mark each physical pipe port on the
-SVG preview and identify its medium and direction.
+used by automatic routing.
 
-The first review drawings use yellow/red `P1`, `P2`, etc. markers. These are visual
-candidates only. After confirmation, a marker is converted into a named engineering
-anchor; rejected markers are removed or moved.
+The approved DFD/DH process-air circuit has two distinct routes:
+
+- supply air: DFD top outlet to the DH side inlet;
+- return air: DH side outlet to the DFD top inlet.
+
+Both use black outlined ductwork with rounded bends and a direction arrow. The DFD top legs are
+vertical, while the DH connection legs are horizontal. Horizontal pipe length stretches
+automatically with machine spacing. DH side anchors and their connection geometry mirror
+together whenever the DFD is placed on the opposite side.
+
+Review drawings use yellow/red `P1`, `P2`, etc. markers for visual candidates. After
+confirmation, a marker is converted into a named engineering anchor; rejected markers
+are removed or moved.

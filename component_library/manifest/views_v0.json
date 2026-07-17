@@ -15,16 +15,14 @@
       "source_block": "A$C7B2D2076",
       "native_extents_mm": {"width": 1283.000, "height": 1562.500},
       "geometry_status": "approved_family_standard",
-      "anchor_status": "needs_review",
-      "anchors": [],
-      "review_markers": [
-        {"id": "P1", "x": 0.337, "y": 0.965, "question": "Confirm port function, medium and direction."},
-        {"id": "P2", "x": 0.516, "y": 0.965, "question": "Confirm port function, medium and direction."},
-        {"id": "P3", "x": 0.686, "y": 0.965, "question": "Confirm port function, medium and direction."},
-        {"id": "P4", "x": 0.789, "y": 0.965, "question": "Confirm port function, medium and direction."}
+      "anchor_status": "approved",
+      "anchors": [
+        {"id": "drying-air-supply-top", "medium": "drying_air", "circuit_role": "supply", "direction": "out", "side": "top", "x": 0.516, "y": 0.965, "nominal_draw_width": 2.2},
+        {"id": "drying-air-return-top", "medium": "drying_air", "circuit_role": "return", "direction": "in", "side": "top", "x": 0.789, "y": 0.965, "nominal_draw_width": 2.2}
       ],
+      "review_markers": [],
       "preview": "../previews/dfd-family-left-side.svg",
-      "notes": "User-approved left-side geometry for the DFD family. Pipe anchors are intentionally unavailable until visually confirmed."
+      "notes": "User-approved left-side geometry for the DFD family. The two top anchors form the standard closed drying-air circuit with a DH."
     },
     {
       "id": "dh-family-front",
@@ -32,18 +30,19 @@
       "models": ["DH800-III"],
       "view": "front",
       "source_file": "DH800-III_front_160.dwg",
-      "source_block": "A$C648D7515",
+      "source_block": "MODEL_SPACE_COMPOSITE",
       "native_extents_mm": {"width": 1178.761, "height": 3194.499},
-      "geometry_status": "needs_review",
-      "anchor_status": "needs_review",
-      "anchors": [],
-      "review_markers": [
-        {"id": "P1", "x": 0.215, "y": 0.930, "question": "Confirm whether this is a drying-air port, and its direction."},
-        {"id": "P2", "x": 0.730, "y": 0.915, "question": "Confirm whether this is a drying-air port, and its direction."},
-        {"id": "P3", "x": 0.500, "y": 0.020, "question": "Confirm the dried-material discharge/catchbox connection position."}
+      "geometry_status": "approved_family_standard",
+      "anchor_status": "approved",
+      "allowed_transformations": ["mirror_about_vertical_axis_to_face_dfd"],
+      "anchors": [
+        {"id": "drying-air-return-side", "medium": "drying_air", "circuit_role": "return", "direction": "out", "side": "left", "x": 0.080, "y": 0.885, "nominal_draw_width": 2.2},
+        {"id": "drying-air-supply-side", "medium": "drying_air", "circuit_role": "supply", "direction": "in", "side": "left", "x": 0.080, "y": 0.650, "nominal_draw_width": 2.2},
+        {"id": "dried-material-discharge-bottom", "medium": "gravity_dried_material", "direction": "out", "side": "bottom", "x": 0.500, "y": 0.020, "nominal_draw_width": 2.5}
       ],
+      "review_markers": [],
       "preview": "../previews/dh-family-front.svg",
-      "notes": "Provisional front geometry: the user described this representation as almost correct."
+      "notes": "Complete DH front geometry extracted from model space, including the standard floor frame. Side anchors mirror together when the DFD changes side."
     },
     {
       "id": "svr-reference-front",

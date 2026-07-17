@@ -40,6 +40,44 @@ def rounded_orthogonal_path(points: list[Point], radius: float = 4.0) -> str:
     return " ".join(commands)
 
 
+def drying_air_circuit_routes(
+    dfd_supply: Point,
+    dfd_return: Point,
+    dh_supply: Point,
+    dh_return: Point,
+) -> dict[str, list[Point]]:
+    """Route the standard two-pipe DFD/DH drying-air circuit.
+
+    DFD connections are on the cabinet top and therefore leave vertically. DH
+    connections are on the side facing the DFD and therefore enter horizontally.
+    The horizontal leg automatically stretches when machine spacing changes.
+    """
+    return {
+        "supply": [dfd_supply, (dfd_supply[0], dh_supply[1]), dh_supply],
+        "return": [dh_return, (dfd_return[0], dh_return[1]), dfd_return],
+    }
+
+
+def route_direction_arrow(points: list[Point], length: float = 6.0) -> tuple[Point, Point]:
+    """Place a direction arrow on the longest horizontal segment of a route."""
+    horizontal = [
+        (start, end)
+        for start, end in zip(points, points[1:])
+        if start[1] == end[1] and start[0] != end[0]
+    ]
+    if not horizontal:
+        raise ValueError("A direction arrow requires a horizontal route segment.")
+    start, end = max(horizontal, key=lambda segment: abs(segment[1][0] - segment[0][0]))
+    direction = 1.0 if end[0] > start[0] else -1.0
+    midpoint_x = (start[0] + end[0]) / 2
+    half = min(length / 2, abs(end[0] - start[0]) / 4)
+    y = start[1]
+    return (
+        (midpoint_x - direction * half, y),
+        (midpoint_x + direction * half, y),
+    )
+
+
 def route_collisions(
     points: list[Point],
     obstacles: dict[str, Rect],

@@ -17,3 +17,17 @@ is not visible in released drawings.
 
 These rules are machine-readable in `rules/layout_rules_v0.json`. They are intended for
 the dynamic layout planner, not only the standard baseline drawing.
+
+## DH full assembly
+
+The registered DH front view is a model-space composite, not only the hopper body block.
+Its bounding box includes the standard floor frame, and the bottom of that frame is
+placed on the drawing floor line. This full extent is also used when calculating the
+display scale and the receiver mounting plane.
+
+## DFD/DH process-air circuit
+
+The DFD/DH circuit is independent of material and vacuum conveying routes. Its two DFD
+ports are on top of the dryer, its two DH ports are on the side facing the DFD, and the
+horizontal sections stretch to the selected machine spacing. Both routes use rounded
+bends and explicit airflow arrows.

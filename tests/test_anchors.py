@@ -11,14 +11,15 @@ REGISTRY = json.loads(
 )
 
 
-def test_view_registry_is_valid_but_flags_reviews() -> None:
+def test_view_registry_is_valid_with_approved_standard_anchors() -> None:
     result = validate_views(REGISTRY)
     assert result["errors"] == []
-    assert len(result["warnings"]) == 2
+    assert result["warnings"] == []
 
 
 def test_unreviewed_anchors_cannot_be_used_for_routing() -> None:
     registry = deepcopy(REGISTRY)
+    registry["views"][0]["anchor_status"] = "needs_review"
     registry["views"][0]["anchors"] = [
         {"id": "air-out", "medium": "drying_air", "direction": "out", "x": 0.5, "y": 0.5}
     ]
@@ -37,16 +38,28 @@ def test_approved_anchor_coordinates_must_be_normalized() -> None:
     assert any("x must be normalized" in error for error in result["errors"])
 
 
-def test_geometry_can_be_approved_before_anchors() -> None:
+def test_dfd_and_dh_process_air_anchors_are_approved() -> None:
     dfd = REGISTRY["views"][0]
+    dh = REGISTRY["views"][1]
     assert dfd["geometry_status"] == "approved_family_standard"
-    assert dfd["anchor_status"] == "needs_review"
-    assert dfd["anchors"] == []
+    assert dfd["anchor_status"] == "approved"
+    assert {anchor["id"] for anchor in dfd["anchors"]} == {
+        "drying-air-supply-top",
+        "drying-air-return-top",
+    }
+    assert dh["geometry_status"] == "approved_family_standard"
+    assert dh["source_block"] == "MODEL_SPACE_COMPOSITE"
+    assert {anchor["id"] for anchor in dh["anchors"]} >= {
+        "drying-air-supply-side",
+        "drying-air-return-side",
+    }
 
 
 def test_review_marker_coordinates_must_be_normalized() -> None:
     registry = deepcopy(REGISTRY)
-    registry["views"][0]["review_markers"][0]["y"] = -0.1
+    registry["views"][0]["review_markers"] = [
+        {"id": "P1", "x": 0.5, "y": -0.1, "question": "Test"}
+    ]
     result = validate_views(registry)
     assert any("P1 y must be normalized" in error for error in result["errors"])
 

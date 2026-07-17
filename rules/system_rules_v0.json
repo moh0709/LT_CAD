@@ -21,6 +21,10 @@
     "discharge": {
       "colour": "#D52AA3",
       "description": "Receiver discharge into destination equipment"
+    },
+    "drying_air": {
+      "colour": "#222222",
+      "description": "Closed process-air circuit between DFD and DH"
     }
   },
   "connection_rules": [
@@ -51,6 +55,20 @@
       "source_families": ["SVR"],
       "target_families": ["EXT"],
       "status": "confirmed"
+    },
+    {
+      "id": "dfd-to-dh-process-air-supply",
+      "medium": "drying_air",
+      "source_families": ["DFD"],
+      "target_families": ["DH"],
+      "status": "confirmed"
+    },
+    {
+      "id": "dh-to-dfd-process-air-return",
+      "medium": "drying_air",
+      "source_families": ["DH"],
+      "target_families": ["DFD"],
+      "status": "confirmed"
     }
   ],
   "node_requirements": [
@@ -80,4 +98,3 @@
     }
   ]
 }
-

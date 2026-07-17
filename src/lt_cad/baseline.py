@@ -8,7 +8,12 @@ import json
 from pathlib import Path
 
 from lt_cad.layout import _nested_svg, _raster_b64
-from lt_cad.routing import rounded_orthogonal_path, route_collisions
+from lt_cad.routing import (
+    drying_air_circuit_routes,
+    rounded_orthogonal_path,
+    route_collisions,
+    route_direction_arrow,
+)
 from lt_cad.anchors import anchor_point
 from lt_cad.grid import Box, Grid, validate_top_mount
 
@@ -37,15 +42,30 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
     layout_rules = json.loads(
         (repo_root / "rules" / "layout_rules_v0.json").read_text(encoding="utf-8")
     )
+    view_registry = json.loads(
+        (repo_root / "component_library" / "manifest" / "views_v0.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    views = {view["id"]: view for view in view_registry["views"]}
+
+    def registered_anchor(view_id: str, anchor_id: str) -> dict[str, object]:
+        for anchor in views[view_id]["anchors"]:
+            if anchor["id"] == anchor_id:
+                return anchor
+        raise ValueError(f"Registered anchor not found: {view_id}/{anchor_id}")
+
     grid = Grid(layout_rules["grid"]["unit_mm"])
     svr_policy = layout_rules["component_size_policies"]["SVR"]
+    drying_air_policy = layout_rules["process_air_circuit"]
     svr_fixed_size = (svr_policy["width_mm"], svr_policy["height_mm"])
     mount_rules = {rule["host_family"]: rule for rule in layout_rules["mounting_rules"]}
     dh_mount_offset = mount_rules["DH"]["host_mounting_plane_offset_from_box_top_mm"]
     ext_mount_offset = mount_rules["EXT"]["host_mounting_plane_offset_from_box_top_mm"]
     boxes = {
         "source": grid.box(120, 120, 25, 35),
-        "dh": grid.box(155, 60, 45, 95),
+        # 35:95 follows the complete DH800 CAD extent, including its floor frame.
+        "dh": grid.box(160, 60, 35, 95),
         "dfd": grid.box(205, 105, 35, 45),
         "catchbox": grid.box(170, 135, 20, 35),
         "ext": grid.box(270, 110, 45, 45),
@@ -67,15 +87,36 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         if mount_errors:
             raise ValueError(f"{child_id} mounting invalid: {mount_errors}")
 
-    # Calibrated to visible nozzle endpoints in the canonical 225 x 616 SVR raster.
-    svr_material = {"x": 0.844, "y": 0.424}
-    svr_vacuum = {"x": 0.978, "y": 0.943}
-    catchbox_upper = {"x": 1.0, "y": 0.354}
+    svr_material = registered_anchor("svr-reference-front", "material-side")
+    svr_vacuum = registered_anchor("svr-reference-front", "vacuum-top")
+    catchbox_upper = registered_anchor("catchbox-reference-side", "material-upper")
     dh_material_port = anchor_point(svr_material, boxes["dh_svr"].tuple(), mirror_x=True)
     dh_vacuum_port = anchor_point(svr_vacuum, boxes["dh_svr"].tuple(), mirror_x=True)
     ext_material_port = anchor_point(svr_material, boxes["ext_svr"].tuple(), mirror_x=True)
     ext_vacuum_port = anchor_point(svr_vacuum, boxes["ext_svr"].tuple(), mirror_x=True)
     catchbox_material_port = anchor_point(catchbox_upper, boxes["catchbox"].tuple())
+
+    # Approved standard process-air anchors. The DH reference view faces a DFD on
+    # its left; this baseline has the DFD on the right, so both DH side anchors are
+    # mirrored with the component connection side.
+    dfd_supply_port = anchor_point(
+        registered_anchor("dfd-family-left-side", "drying-air-supply-top"),
+        boxes["dfd"].tuple(),
+    )
+    dfd_return_port = anchor_point(
+        registered_anchor("dfd-family-left-side", "drying-air-return-top"),
+        boxes["dfd"].tuple(),
+    )
+    dh_supply_port = anchor_point(
+        registered_anchor("dh-family-front", "drying-air-supply-side"),
+        boxes["dh"].tuple(),
+        mirror_x=True,
+    )
+    dh_return_port = anchor_point(
+        registered_anchor("dh-family-front", "drying-air-return-side"),
+        boxes["dh"].tuple(),
+        mirror_x=True,
+    )
 
     obstacles = {
         key: box.tuple() for key, box in boxes.items()
@@ -85,6 +126,16 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         "dried": [catchbox_material_port, (200, catchbox_material_port[1]), (200, 175), (255, 175), (255, ext_material_port[1]), ext_material_port],
         "vacuum_main": [dh_vacuum_port, (160, dh_vacuum_port[1]), (160, 15), (325, 15), (325, 142.5), (335, 142.5)],
         "vacuum_ext": [ext_vacuum_port, (275, ext_vacuum_port[1]), (275, 55), (325, 55)],
+    }
+    drying_air_routes = drying_air_circuit_routes(
+        dfd_supply_port,
+        dfd_return_port,
+        dh_supply_port,
+        dh_return_port,
+    )
+    drying_air_arrows = {
+        route_id: route_direction_arrow(points)
+        for route_id, points in drying_air_routes.items()
     }
     collision_rules = {
         "undried": {"source", "dh_svr"},
@@ -96,6 +147,17 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         collisions = route_collisions(points, obstacles, ignore=collision_rules[route_id], clearance=1)
         if collisions:
             raise ValueError(f"Route {route_id} crosses component borders: {collisions}")
+    for route_id, points in drying_air_routes.items():
+        collisions = route_collisions(
+            points,
+            obstacles,
+            ignore={"dh", "dfd"},
+            clearance=1,
+        )
+        if collisions:
+            raise ValueError(
+                f"Drying-air route {route_id} crosses component borders: {collisions}"
+            )
 
     parts = [
         '<?xml version="1.0" encoding="UTF-8"?>',
@@ -107,8 +169,10 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         '.equipment{font-size:4px;font-weight:bold}.small{font-size:3px}.legend{font-size:3.3px}'
         '.callout-circle{fill:white;stroke:#ff3030;stroke-width:.35}.callout-line{stroke:#ff3030;stroke-width:.35}'
         '.callout-number{font-size:4px;fill:#ff3030;text-anchor:middle}.title{font-size:4.5px}'
-        '.route{fill:none;stroke-width:2.5;stroke-linejoin:round}.ground{stroke:#111;stroke-width:.45}</style>',
-        '<defs><marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#35C4CF"/></marker></defs>',
+        '.route{fill:none;stroke-width:2.5;stroke-linejoin:round}.process-air{fill:none;stroke-linecap:butt;stroke-linejoin:round}'
+        '.ground{stroke:#111;stroke-width:.45}</style>',
+        '<defs><marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#35C4CF"/></marker>'
+        '<marker id="arrow-process" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#222"/></marker></defs>',
         # Floor and hatch.
         '<line x1="75" y1="155" x2="365" y2="155" class="ground"/>',
         '<path d="M78 154 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6 m12-6 l-4 6" stroke="#777" stroke-width=".3" fill="none"/>',
@@ -125,8 +189,13 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         raster("component_library/raster/extruder.png.b64", boxes["ext"]),
         raster("component_library/raster/svr.png.b64", boxes["ext_svr"], mirror_x=True),
         raster("component_library/raster/lt-family.png.b64", boxes["lt"]),
-        # Drying-air short couplings between DH and DFD.
-        '<path d="M200 132 H205 M200 140 H205" fill="none" stroke="#222" stroke-width="1.1"/>',
+        # Standard closed DFD/DH drying-air circuit: DFD top ports to DH side ports.
+        f'<path data-route="drying-air-supply" d="{rounded_orthogonal_path(drying_air_routes["supply"], drying_air_policy["bend_radius_mm"])}" class="process-air" stroke="#222" stroke-width="{drying_air_policy["outer_line_width_mm"]}"/>',
+        f'<path d="{rounded_orthogonal_path(drying_air_routes["supply"], drying_air_policy["bend_radius_mm"])}" class="process-air" stroke="white" stroke-width="{drying_air_policy["inner_line_width_mm"]}"/>',
+        f'<path data-route="drying-air-return" d="{rounded_orthogonal_path(drying_air_routes["return"], drying_air_policy["bend_radius_mm"])}" class="process-air" stroke="#222" stroke-width="{drying_air_policy["outer_line_width_mm"]}"/>',
+        f'<path d="{rounded_orthogonal_path(drying_air_routes["return"], drying_air_policy["bend_radius_mm"])}" class="process-air" stroke="white" stroke-width="{drying_air_policy["inner_line_width_mm"]}"/>',
+        f'<line data-flow-arrow="drying-air-supply" x1="{drying_air_arrows["supply"][0][0]}" y1="{drying_air_arrows["supply"][0][1]}" x2="{drying_air_arrows["supply"][1][0]}" y2="{drying_air_arrows["supply"][1][1]}" stroke="#555" stroke-width=".4" marker-end="url(#arrow-process)"/>',
+        f'<line data-flow-arrow="drying-air-return" x1="{drying_air_arrows["return"][0][0]}" y1="{drying_air_arrows["return"][0][1]}" x2="{drying_air_arrows["return"][1][0]}" y2="{drying_air_arrows["return"][1][1]}" stroke="#555" stroke-width=".4" marker-end="url(#arrow-process)"/>',
         # Green undried material route: source to receiver above DH.
         f'<path d="{rounded_orthogonal_path(routes["undried"], 4)}" class="route" stroke="#31D843"/>',
         # Magenta dried-material route below the floor and to EXT receiver.

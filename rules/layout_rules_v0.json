@@ -44,5 +44,22 @@
       "policy": "mirror_about_vertical_axis_to_face_incoming_pipe",
       "transform_component_and_anchors_together": true
     }
-  ]
+  ],
+  "process_air_circuit": {
+    "id": "DFD_DH_STANDARD",
+    "medium": "drying_air",
+    "routes": {
+      "supply": {"direction": "DFD_to_DH"},
+      "return": {"direction": "DH_to_DFD"}
+    },
+    "dfd_connection_face": "top",
+    "dh_connection_face": "side_toward_dfd",
+    "horizontal_segment_policy": "stretch_to_machine_spacing",
+    "bend_radius_mm": 5,
+    "line_colour": "#222222",
+    "rendering": "outlined_duct",
+    "outer_line_width_mm": 2.2,
+    "inner_line_width_mm": 1.4,
+    "flow_arrows_required": true
+  }
 }
