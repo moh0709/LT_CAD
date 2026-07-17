@@ -40,6 +40,9 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
     grid = Grid(layout_rules["grid"]["unit_mm"])
     svr_policy = layout_rules["component_size_policies"]["SVR"]
     svr_fixed_size = (svr_policy["width_mm"], svr_policy["height_mm"])
+    mount_rules = {rule["host_family"]: rule for rule in layout_rules["mounting_rules"]}
+    dh_mount_offset = mount_rules["DH"]["host_mounting_plane_offset_from_box_top_mm"]
+    ext_mount_offset = mount_rules["EXT"]["host_mounting_plane_offset_from_box_top_mm"]
     boxes = {
         "source": grid.box(120, 120, 25, 35),
         "dh": grid.box(155, 60, 45, 95),
@@ -48,10 +51,19 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         "ext": grid.box(270, 110, 45, 45),
         "lt": grid.box(335, 130, 15, 25),
     }
-    boxes["dh_svr"] = grid.mounted_on_top(boxes["dh"], *svr_fixed_size)
-    boxes["ext_svr"] = grid.mounted_on_top(boxes["ext"], *svr_fixed_size)
-    for child_id, host_id in (("dh_svr", "dh"), ("ext_svr", "ext")):
-        mount_errors = validate_top_mount(boxes[child_id], boxes[host_id])
+    boxes["dh_svr"] = grid.mounted_on_top(
+        boxes["dh"], *svr_fixed_size, host_surface_offset=dh_mount_offset
+    )
+    boxes["ext_svr"] = grid.mounted_on_top(
+        boxes["ext"], *svr_fixed_size, host_surface_offset=ext_mount_offset
+    )
+    for child_id, host_id, offset in (
+        ("dh_svr", "dh", dh_mount_offset),
+        ("ext_svr", "ext", ext_mount_offset),
+    ):
+        mount_errors = validate_top_mount(
+            boxes[child_id], boxes[host_id], host_surface_offset=offset
+        )
         if mount_errors:
             raise ValueError(f"{child_id} mounting invalid: {mount_errors}")
 

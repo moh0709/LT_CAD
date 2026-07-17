@@ -8,7 +8,10 @@ is not visible in released drawings.
 
 - All SVR model labels use one fixed 15 x 40 mm sheet box.
 - An SVR mounted on a DH or EXT is centred on the host.
-- The SVR bottom must physically contact the host top; the permitted gap is 0 mm.
+- The SVR bottom must physically contact the host's declared mounting plane; the
+  permitted gap is 0 mm.
+- The DH front-view bounding box contains duct geometry above its receiver mounting
+  plate. Its mounting plane is therefore 10 mm below the CAD-box top. EXT uses 0 mm.
 - The component and all normalized pipe anchors are mirrored together about the vertical
   axis when the connection side changes.
 

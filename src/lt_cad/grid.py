@@ -43,20 +43,34 @@ class Grid:
             raise ValueError(f"Values are not snapped to {self.unit:g} mm grid: {unsnapped}")
         return Box(x, y, width, height)
 
-    def mounted_on_top(self, host: Box, width: float, height: float) -> Box:
+    def mounted_on_top(
+        self,
+        host: Box,
+        width: float,
+        height: float,
+        host_surface_offset: float = 0.0,
+    ) -> Box:
         if not self.is_snapped(width) or not self.is_snapped(height):
             raise ValueError("Mounted component size must be grid-snapped.")
         x = host.center_x - width / 2
-        y = host.y - height
+        if not self.is_snapped(host_surface_offset):
+            raise ValueError("Host mounting-surface offset must be grid-snapped.")
+        y = host.y + host_surface_offset - height
         if not self.is_snapped(x) or not self.is_snapped(y):
             raise ValueError("Centred mount does not land on the configured grid.")
         return Box(x, y, width, height)
 
 
-def validate_top_mount(child: Box, host: Box, tolerance: float = 1e-6) -> list[str]:
+def validate_top_mount(
+    child: Box,
+    host: Box,
+    host_surface_offset: float = 0.0,
+    tolerance: float = 1e-6,
+) -> list[str]:
     errors: list[str] = []
-    if abs(child.bottom - host.y) > tolerance:
-        errors.append("Mounted component bottom does not contact host top.")
+    mount_y = host.y + host_surface_offset
+    if abs(child.bottom - mount_y) > tolerance:
+        errors.append("Mounted component bottom does not contact host mounting surface.")
     if abs(child.center_x - host.center_x) > tolerance:
         errors.append("Mounted component is not centred on host.")
     return errors

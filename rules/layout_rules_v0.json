@@ -21,8 +21,18 @@
   "mounting_rules": [
     {
       "child_family": "SVR",
-      "host_families": ["DH", "EXT"],
-      "contact": "child_bottom_to_host_top",
+      "host_family": "DH",
+      "contact": "child_bottom_to_host_mounting_plane",
+      "host_mounting_plane_offset_from_box_top_mm": 10,
+      "horizontal_alignment": "center",
+      "gap_mm": 0,
+      "required": true
+    },
+    {
+      "child_family": "SVR",
+      "host_family": "EXT",
+      "contact": "child_bottom_to_host_mounting_plane",
+      "host_mounting_plane_offset_from_box_top_mm": 0,
       "horizontal_alignment": "center",
       "gap_mm": 0,
       "required": true
