@@ -61,6 +61,8 @@ def test_machine_readable_svr_policy_matches_mount_contract() -> None:
     assert header["shared_blower"] is True
     assert header["assembly_type"] == "Micro Scan"
     assert header["station_family"] == "SVS"
+    assert header["station_connection_face"] == "top"
+    assert header["station_approach"] == "vertical_from_above"
     assert header["branch_connection"] == "tee"
     assert header["branch_per_SVR"] is True
     circuit = rules["process_air_circuit"]

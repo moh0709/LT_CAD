@@ -55,6 +55,15 @@ def test_dfd_and_dh_process_air_anchors_are_approved() -> None:
     }
 
 
+def test_microscan_svs_vacuum_anchor_is_top_entry() -> None:
+    svs = next(view for view in REGISTRY["views"] if view["family"] == "SVS")
+    inlet = next(anchor for anchor in svs["anchors"] if anchor["id"] == "vacuum-header-inlet")
+    assert inlet["side"] == "top"
+    assert inlet["x"] == 0.270
+    assert inlet["y"] == 1.000
+    assert anchor_point(inlet, (375, 135, 30, 20)) == (383.1, 135.0)
+
+
 def test_review_marker_coordinates_must_be_normalized() -> None:
     registry = deepcopy(REGISTRY)
     registry["views"][0]["review_markers"] = [

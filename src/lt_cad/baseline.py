@@ -162,7 +162,13 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         "undried": [(132.5, 120), (132.5, dh_material_port[1]), dh_material_port],
         "dried_ext1": [catchbox_upper_port, (200, catchbox_upper_port[1]), (200, 175), (250, 175), (250, ext1_material_port[1]), ext1_material_port],
         "dried_ext2": [catchbox_lower_port, (205, catchbox_lower_port[1]), (205, 185), (310, 185), (310, ext2_material_port[1]), ext2_material_port],
-        "vacuum_header": [dh_vacuum_port, (155, dh_vacuum_port[1]), (155, 15), (370, 15), (370, svs_vacuum_port[1]), svs_vacuum_port],
+        "vacuum_header": [
+            dh_vacuum_port,
+            (155, dh_vacuum_port[1]),
+            (155, 15),
+            (svs_vacuum_port[0], 15),
+            svs_vacuum_port,
+        ],
         "vacuum_ext1_tee": [ext1_vacuum_port, (250, ext1_vacuum_port[1]), (250, 15)],
         "vacuum_ext2_tee": [ext2_vacuum_port, (305, ext2_vacuum_port[1]), (305, 15)],
     }
@@ -248,7 +254,7 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         f'<path data-route="dried-material-ext1" d="{rounded_orthogonal_path(routes["dried_ext1"], 5)}" class="route" stroke="#D52AA3"/>',
         f'<path data-route="dried-material-ext2" d="{rounded_orthogonal_path(routes["dried_ext2"], 5)}" class="route" stroke="#D52AA3"/>',
         # Shared turquoise vacuum header with one T-branch from each EXT receiver.
-        f'<path data-route="vacuum-header" d="{rounded_orthogonal_path(routes["vacuum_header"], 5)}" class="route" stroke="#35C4CF" marker-end="url(#arrow-cyan)"/>',
+        f'<path data-route="vacuum-header" d="{rounded_orthogonal_path(routes["vacuum_header"], 5)}" class="route" stroke="#35C4CF"/>',
         f'<path data-route="vacuum-tee-ext1" d="{rounded_orthogonal_path(routes["vacuum_ext1_tee"], 4)}" class="route" stroke="#35C4CF"/>',
         f'<path data-route="vacuum-tee-ext2" d="{rounded_orthogonal_path(routes["vacuum_ext2_tee"], 4)}" class="route" stroke="#35C4CF"/>',
         # Labels.

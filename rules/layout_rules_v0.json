@@ -85,6 +85,8 @@
     "assembly_type": "Micro Scan",
     "shared_blower": true,
     "station_family": "SVS",
+    "station_connection_face": "top",
+    "station_approach": "vertical_from_above",
     "branch_connection": "tee",
     "branch_per_SVR": true,
     "header_extension_policy": "extend_to_furthest_receiver"

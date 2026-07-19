@@ -94,11 +94,11 @@
       "anchor_status": "approved",
       "sheet_size_policy": {"type": "fixed", "width_mm": 30, "height_mm": 20},
       "anchors": [
-        {"id": "vacuum-header-inlet", "medium": "vacuum_air", "direction": "in", "side": "left", "x": 0.270, "y": 0.400, "nominal_draw_width": 1.5}
+        {"id": "vacuum-header-inlet", "medium": "vacuum_air", "direction": "in", "side": "top", "x": 0.270, "y": 1.000, "nominal_draw_width": 1.5}
       ],
       "review_markers": [],
       "preview": "../raster/svs.png.b64",
-      "notes": "Approved Micro Scan station reference. The common vacuum header enters horizontally from the left."
+      "notes": "Approved Micro Scan station reference. The common vacuum header approaches vertically from above and connects to the turquoise top stub already present in the symbol."
     }
   ]
 }
