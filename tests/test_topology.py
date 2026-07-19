@@ -48,3 +48,16 @@ def test_unknown_component_reference_is_rejected() -> None:
     result = validate_topology(topology, RULES)
     assert any("unknown component" in error for error in result["errors"])
 
+
+def test_microscan_and_con_evator_are_distinct_confirmed_topologies() -> None:
+    vacuum_rules = {
+        rule["assembly_type"]: rule
+        for rule in RULES["connection_rules"]
+        if rule["medium"] == "vacuum_air"
+    }
+    assert vacuum_rules["Con-Evator"]["target_families"] == ["LT"]
+    assert vacuum_rules["Con-Evator"]["cardinality"] == "one_to_one"
+    assert vacuum_rules["Micro Scan"]["target_families"] == ["SVS"]
+    assert vacuum_rules["Micro Scan"]["cardinality"] == "many_to_one"
+    shared = RULES["network_rules"][0]
+    assert shared["shared_target_family"] == "SVS"

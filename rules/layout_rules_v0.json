@@ -16,6 +16,12 @@
       "width_mm": 15,
       "height_mm": 40,
       "applies_to_all_models": true
+    },
+    "SVS": {
+      "policy": "fixed_sheet_box",
+      "width_mm": 30,
+      "height_mm": 20,
+      "applies_to_models": ["SVS-I/LT5-I", "SVS-I/LT6-I"]
     }
   },
   "component_requirements": {
@@ -74,7 +80,9 @@
     "excludes": ["drying_air"]
   },
   "shared_vacuum_header": {
+    "assembly_type": "Micro Scan",
     "shared_blower": true,
+    "station_family": "SVS",
     "branch_connection": "tee",
     "branch_per_SVR": true,
     "header_extension_policy": "extend_to_furthest_receiver"

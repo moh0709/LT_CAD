@@ -34,10 +34,21 @@
   },
   "connection_rules": [
     {
-      "id": "vacuum-return",
+      "id": "con-evator-vacuum-return",
       "medium": "vacuum_air",
       "source_families": ["SVR"],
       "target_families": ["LT"],
+      "assembly_type": "Con-Evator",
+      "cardinality": "one_to_one",
+      "status": "confirmed"
+    },
+    {
+      "id": "microscan-vacuum-return",
+      "medium": "vacuum_air",
+      "source_families": ["SVR"],
+      "target_families": ["SVS"],
+      "assembly_type": "Micro Scan",
+      "cardinality": "many_to_one",
       "status": "confirmed"
     },
     {
@@ -83,7 +94,7 @@
       "topology": "shared_header",
       "branch_connection": "tee",
       "one_branch_per_SVR": true,
-      "shared_target_family": "LT",
+      "shared_target_family": "SVS",
       "status": "confirmed"
     }
   ],
@@ -100,8 +111,14 @@
     {
       "family": "SVR",
       "outgoing": [
-        {"medium": "vacuum_air", "other_family": "LT"},
+        {"medium": "vacuum_air", "other_families": ["LT", "SVS"]},
         {"medium": "discharge", "other_family": "EXT"}
+      ]
+    },
+    {
+      "family": "SVS",
+      "incoming": [
+        {"medium": "vacuum_air", "other_family": "SVR"}
       ]
     }
   ],
@@ -110,6 +127,12 @@
       "family": "LT",
       "models": ["LT3", "LT4", "LT5", "LT6"],
       "graphic_policy": "shared_symbol_model_specific_label",
+      "status": "confirmed"
+    },
+    {
+      "family": "SVS",
+      "models": ["SVS-I/LT5-I", "SVS-I/LT6-I"],
+      "graphic_policy": "micro_scan_station_shared_by_scanning_receivers",
       "status": "confirmed"
     }
   ]

@@ -79,6 +79,7 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
 
     grid = Grid(layout_rules["grid"]["unit_mm"])
     svr_policy = layout_rules["component_size_policies"]["SVR"]
+    svs_policy = layout_rules["component_size_policies"]["SVS"]
     dh_frame_policy = layout_rules["component_requirements"]["DH"]["frame_symbol"]
     conveying_route_policy = layout_rules["conveying_route_style"]
     conveying_route_width = conveying_route_policy["stroke_width_mm"]
@@ -95,7 +96,7 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         "catchbox": grid.box(170, 135, 20, 35),
         "ext1": grid.box(260, 110, 45, 45),
         "ext2": grid.box(315, 110, 45, 45),
-        "lt": grid.box(385, 130, 15, 25),
+        "svs": grid.box(375, 135, svs_policy["width_mm"], svs_policy["height_mm"]),
     }
     boxes["dh_svr"] = grid.mounted_on_top(
         boxes["dh"], *svr_fixed_size, host_surface_offset=dh_mount_offset
@@ -121,6 +122,7 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
     svr_vacuum = registered_anchor("svr-reference-front", "vacuum-top")
     catchbox_upper = registered_anchor("catchbox-reference-side", "material-upper")
     catchbox_lower = registered_anchor("catchbox-reference-side", "material-lower")
+    svs_vacuum = registered_anchor("svs-microscan-reference", "vacuum-header-inlet")
     dh_material_port = anchor_point(svr_material, boxes["dh_svr"].tuple(), mirror_x=True)
     dh_vacuum_port = anchor_point(svr_vacuum, boxes["dh_svr"].tuple(), mirror_x=True)
     ext1_material_port = anchor_point(svr_material, boxes["ext1_svr"].tuple(), mirror_x=True)
@@ -129,6 +131,7 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
     ext2_vacuum_port = anchor_point(svr_vacuum, boxes["ext2_svr"].tuple(), mirror_x=True)
     catchbox_upper_port = anchor_point(catchbox_upper, boxes["catchbox"].tuple())
     catchbox_lower_port = anchor_point(catchbox_lower, boxes["catchbox"].tuple())
+    svs_vacuum_port = anchor_point(svs_vacuum, boxes["svs"].tuple())
 
     # Approved standard process-air anchors. The DH reference view faces a DFD on
     # its left; this baseline has the DFD on the right, so both DH side anchors are
@@ -159,7 +162,7 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         "undried": [(132.5, 120), (132.5, dh_material_port[1]), dh_material_port],
         "dried_ext1": [catchbox_upper_port, (200, catchbox_upper_port[1]), (200, 175), (250, 175), (250, ext1_material_port[1]), ext1_material_port],
         "dried_ext2": [catchbox_lower_port, (205, catchbox_lower_port[1]), (205, 185), (310, 185), (310, ext2_material_port[1]), ext2_material_port],
-        "vacuum_header": [dh_vacuum_port, (155, dh_vacuum_port[1]), (155, 15), (375, 15), (375, 142.5), (385, 142.5)],
+        "vacuum_header": [dh_vacuum_port, (155, dh_vacuum_port[1]), (155, 15), (370, 15), (370, svs_vacuum_port[1]), svs_vacuum_port],
         "vacuum_ext1_tee": [ext1_vacuum_port, (250, ext1_vacuum_port[1]), (250, 15)],
         "vacuum_ext2_tee": [ext2_vacuum_port, (305, ext2_vacuum_port[1]), (305, 15)],
     }
@@ -177,7 +180,7 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         "undried": {"source", "dh_svr"},
         "dried_ext1": {"catchbox", "ext1_svr"},
         "dried_ext2": {"catchbox", "ext2_svr"},
-        "vacuum_header": {"dh_svr", "lt"},
+        "vacuum_header": {"dh_svr", "svs"},
         "vacuum_ext1_tee": {"ext1_svr"},
         "vacuum_ext2_tee": {"ext2_svr"},
     }
@@ -229,7 +232,9 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         raster("component_library/raster/svr.png.b64", boxes["ext1_svr"], mirror_x=True),
         raster("component_library/raster/extruder.png.b64", boxes["ext2"]),
         raster("component_library/raster/svr.png.b64", boxes["ext2_svr"], mirror_x=True),
-        raster("component_library/raster/lt-family.png.b64", boxes["lt"]),
+        '<g data-component="micro-scan-svs">',
+        raster("component_library/raster/svs.png.b64", boxes["svs"]),
+        '</g>',
         # Standard closed DFD/DH drying-air circuit: DFD top ports to DH side ports.
         f'<path data-route="drying-air-supply" d="{rounded_orthogonal_path(drying_air_routes["supply"], drying_air_policy["bend_radius_mm"])}" class="process-air" stroke="#222" stroke-width="{drying_air_policy["outer_line_width_mm"]}"/>',
         f'<path d="{rounded_orthogonal_path(drying_air_routes["supply"], drying_air_policy["bend_radius_mm"])}" class="process-air" stroke="white" stroke-width="{drying_air_policy["inner_line_width_mm"]}"/>',
@@ -252,7 +257,7 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         '<text x="177.5" y="154" class="equipment" text-anchor="middle">DH</text>',
         '<text x="282.5" y="154" class="equipment" text-anchor="middle">EXT 1</text>',
         '<text x="337.5" y="154" class="equipment" text-anchor="middle">EXT 2</text>',
-        '<text x="392.5" y="160" class="equipment" text-anchor="middle">LT</text>',
+        '<text x="390" y="161" class="equipment" text-anchor="middle">MICRO SCAN SVS / LT6-I</text>',
         # Red item callouts matching the baseline convention.
         _callout(1, 238, 96, 225, 112),
         _callout(2, 160, 84, 168, 105),
@@ -260,12 +265,12 @@ def create_baseline_svg(repo_root: Path, output: Path, metadata: dict[str, str])
         _callout(4, 177, 37, 180, 52),
         _callout(4, 276, 68, 278, 83),
         _callout(4, 331, 68, 333, 83),
-        _callout(4, 407, 119, 389, 139),
+        _callout(4, 407, 119, 386, 145),
         _callout(5, 239, 126, 225, 141),
         # Equipment list.
         '<g class="legend">',
         '<circle cx="20" cy="181" r="5" class="callout-circle"/><text x="20" y="182.5" class="callout-number">5</text><text x="30" y="182.5">Mobile Frame</text>',
-        '<circle cx="20" cy="193" r="5" class="callout-circle"/><text x="20" y="194.5" class="callout-number">4</text><text x="30" y="194.5">Con-Evator SVR / LT</text>',
+        '<circle cx="20" cy="193" r="5" class="callout-circle"/><text x="20" y="194.5" class="callout-number">4</text><text x="30" y="194.5">Scanning SVR / Micro Scan SVS</text>',
         '<circle cx="20" cy="205" r="5" class="callout-circle"/><text x="20" y="206.5" class="callout-number">3</text><text x="30" y="206.5">Catchbox</text>',
         '<circle cx="20" cy="217" r="5" class="callout-circle"/><text x="20" y="218.5" class="callout-number">2</text><text x="30" y="218.5">Drying Hopper DH</text>',
         '<circle cx="20" cy="229" r="5" class="callout-circle"/><text x="20" y="230.5" class="callout-number">1</text><text x="30" y="230.5">Desiccant Flex Dryer DFD</text>',

@@ -81,6 +81,24 @@
       "review_markers": [],
       "preview": "../raster/catchbox.png.b64",
       "notes": "Two material connection points approved from the red port review image. Horizontal mirroring is permitted."
+    },
+    {
+      "id": "svs-microscan-reference",
+      "family": "SVS",
+      "models": ["SVS-I/LT5-I", "SVS-I/LT6-I"],
+      "view": "side_reference",
+      "source_file": "SVS.png",
+      "source_block": null,
+      "native_extents_mm": null,
+      "geometry_status": "approved",
+      "anchor_status": "approved",
+      "sheet_size_policy": {"type": "fixed", "width_mm": 30, "height_mm": 20},
+      "anchors": [
+        {"id": "vacuum-header-inlet", "medium": "vacuum_air", "direction": "in", "side": "left", "x": 0.270, "y": 0.400, "nominal_draw_width": 2.25}
+      ],
+      "review_markers": [],
+      "preview": "../raster/svs.png.b64",
+      "notes": "Approved Micro Scan station reference. The common vacuum header enters horizontally from the left."
     }
   ]
 }

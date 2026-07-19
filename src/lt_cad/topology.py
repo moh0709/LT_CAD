@@ -72,15 +72,18 @@ def validate_topology(topology: dict[str, Any], rules: dict[str, Any]) -> dict[s
             component_id = component["id"]
             for direction in ("incoming", "outgoing"):
                 for expected in requirement.get(direction, []):
+                    other_families = expected.get("other_families") or [
+                        expected["other_family"]
+                    ]
                     found = any(
                         medium == expected["medium"]
                         and (
                             direction == "incoming"
                             and target.get("id") == component_id
-                            and source.get("family") == expected["other_family"]
+                            and source.get("family") in other_families
                             or direction == "outgoing"
                             and source.get("id") == component_id
-                            and target.get("family") == expected["other_family"]
+                            and target.get("family") in other_families
                         )
                         for source, target, medium in valid_connections
                     )
@@ -88,7 +91,7 @@ def validate_topology(topology: dict[str, Any], rules: dict[str, Any]) -> dict[s
                         errors.append(
                             f"{component_id} requires {direction} "
                             f"{expected['medium']} connection with "
-                            f"{expected['other_family']}."
+                            f"{' or '.join(other_families)}."
                         )
 
     return {"errors": errors, "warnings": warnings}
@@ -118,4 +121,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

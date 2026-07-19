@@ -56,6 +56,16 @@
       "notes": "One approved graphic will represent LT3/LT4/LT5/LT6 variants; the quoted model remains in the label."
     },
     {
+      "id": "svs-microscan-reference",
+      "family": "SVS",
+      "model": "SVS-I/LT6-I",
+      "view": "side_reference",
+      "status": "approved",
+      "candidate_blocks": [],
+      "anchors": ["vacuum-header-inlet"],
+      "notes": "User-supplied and approved Micro Scan/SVS reference symbol. It represents the common station used by multiple scanning SVRs and is distinct from a standalone LT blower."
+    },
+    {
       "id": "wam-family",
       "family": "WAM",
       "model": null,
@@ -67,4 +77,3 @@
     }
   ]
 }
-

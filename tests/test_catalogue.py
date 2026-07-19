@@ -24,3 +24,11 @@ def test_source_is_millimetre_dxf() -> None:
     assert data["source"]["units"] == "mm"
     assert data["source"]["format"].startswith("DXF")
 
+
+def test_microscan_svs_is_registered_separately_from_lt_blower() -> None:
+    data = json.loads(CATALOGUE.read_text(encoding="utf-8"))
+    families = {component["family"] for component in data["components"]}
+    assert {"LT", "SVS"} <= families
+    svs = next(component for component in data["components"] if component["family"] == "SVS")
+    assert svs["status"] == "approved"
+    assert svs["model"] == "SVS-I/LT6-I"

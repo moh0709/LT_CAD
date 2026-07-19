@@ -39,6 +39,8 @@ def test_machine_readable_svr_policy_matches_mount_contract() -> None:
     rules = json.loads((ROOT / "rules" / "layout_rules_v0.json").read_text())
     policy = rules["component_size_policies"]["SVR"]
     assert (policy["width_mm"], policy["height_mm"]) == (15, 40)
+    svs_policy = rules["component_size_policies"]["SVS"]
+    assert (svs_policy["width_mm"], svs_policy["height_mm"]) == (30, 20)
     mounts = {rule["host_family"]: rule for rule in rules["mounting_rules"]}
     assert mounts["DH"]["gap_mm"] == 0
     assert mounts["DH"]["horizontal_alignment"] == "center"
@@ -56,6 +58,8 @@ def test_machine_readable_svr_policy_matches_mount_contract() -> None:
     assert "drying_air" in route_style["excludes"]
     header = rules["shared_vacuum_header"]
     assert header["shared_blower"] is True
+    assert header["assembly_type"] == "Micro Scan"
+    assert header["station_family"] == "SVS"
     assert header["branch_connection"] == "tee"
     assert header["branch_per_SVR"] is True
     circuit = rules["process_air_circuit"]
