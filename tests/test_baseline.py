@@ -37,5 +37,5 @@ def test_baseline_contains_standard_equipment_and_routes(tmp_path: Path) -> None
     assert 'data-route="vacuum-tee-ext1"' in svg
     assert 'data-route="vacuum-tee-ext2"' in svg
     assert 'data-component="micro-scan-svs"' in svg
-    assert '.route{fill:none;stroke-width:2.25' in svg
+    assert '.route{fill:none;stroke-width:1.5' in svg
     assert "Principle Sketch - Drying &amp; Conveying equipment" in svg

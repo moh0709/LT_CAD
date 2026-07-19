@@ -74,9 +74,11 @@
       "gravity_dried_material",
       "discharge"
     ],
-    "stroke_width_mm": 2.25,
-    "previous_stroke_width_mm": 2.5,
-    "reduction_percent": 10,
+    "stroke_width_mm": 1.5,
+    "previous_stroke_width_mm": 2.25,
+    "reduction_percent_from_previous": 33.33,
+    "original_stroke_width_mm": 2.5,
+    "reduction_percent_from_original": 40,
     "excludes": ["drying_air"]
   },
   "shared_vacuum_header": {

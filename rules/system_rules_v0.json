@@ -5,27 +5,27 @@
       "colour": "#35C4CF",
       "description": "Vacuum conveying air",
       "confirmed_direction": "SVR to LT",
-      "nominal_draw_width_mm": 2.25
+      "nominal_draw_width_mm": 1.5
     },
     "dried_material": {
       "colour": "#D52AA3",
       "description": "Dried material under vacuum conveying",
-      "nominal_draw_width_mm": 2.25
+      "nominal_draw_width_mm": 1.5
     },
     "undried_material": {
       "colour": "#42A846",
       "description": "Undried material",
-      "nominal_draw_width_mm": 2.25
+      "nominal_draw_width_mm": 1.5
     },
     "gravity_dried_material": {
       "colour": "#D52AA3",
       "description": "Dried material from DH into catchbox",
-      "nominal_draw_width_mm": 2.25
+      "nominal_draw_width_mm": 1.5
     },
     "discharge": {
       "colour": "#D52AA3",
       "description": "Receiver discharge into destination equipment",
-      "nominal_draw_width_mm": 2.25
+      "nominal_draw_width_mm": 1.5
     },
     "drying_air": {
       "colour": "#222222",

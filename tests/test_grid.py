@@ -53,8 +53,9 @@ def test_machine_readable_svr_policy_matches_mount_contract() -> None:
     assert dh_requirement["frame_symbol"]["line_width_mm"] == 0.75
     assert dh_requirement["frame_symbol"]["left_leg_x_ratio"] == 0.08
     route_style = rules["conveying_route_style"]
-    assert route_style["stroke_width_mm"] == 2.25
-    assert route_style["reduction_percent"] == 10
+    assert route_style["stroke_width_mm"] == 1.5
+    assert route_style["reduction_percent_from_previous"] == 33.33
+    assert route_style["reduction_percent_from_original"] == 40
     assert "drying_air" in route_style["excludes"]
     header = rules["shared_vacuum_header"]
     assert header["shared_blower"] is True
