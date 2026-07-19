@@ -38,7 +38,7 @@
       "anchors": [
         {"id": "drying-air-return-side", "medium": "drying_air", "circuit_role": "return", "direction": "out", "side": "left", "x": 0.080, "y": 0.885, "nominal_draw_width": 2.2},
         {"id": "drying-air-supply-side", "medium": "drying_air", "circuit_role": "supply", "direction": "in", "side": "left", "x": 0.080, "y": 0.650, "nominal_draw_width": 2.2},
-        {"id": "dried-material-discharge-bottom", "medium": "gravity_dried_material", "direction": "out", "side": "bottom", "x": 0.500, "y": 0.020, "nominal_draw_width": 2.5}
+        {"id": "dried-material-discharge-bottom", "medium": "gravity_dried_material", "direction": "out", "side": "bottom", "x": 0.500, "y": 0.020, "nominal_draw_width": 2.25}
       ],
       "review_markers": [],
       "preview": "../previews/dh-family-front.svg",
@@ -57,8 +57,8 @@
       "sheet_size_policy": {"type": "fixed", "width_mm": 15, "height_mm": 40},
       "allowed_transformations": ["mirror_about_vertical_axis"],
       "anchors": [
-        {"id": "material-side", "medium": "material", "direction": "bidirectional", "side": "right", "x": 0.844, "y": 0.424, "nominal_draw_width": 2.5},
-        {"id": "vacuum-top", "medium": "vacuum_air", "direction": "bidirectional", "side": "right", "x": 0.978, "y": 0.943, "nominal_draw_width": 2.5}
+        {"id": "material-side", "medium": "material", "direction": "bidirectional", "side": "right", "x": 0.844, "y": 0.424, "nominal_draw_width": 2.25},
+        {"id": "vacuum-top", "medium": "vacuum_air", "direction": "bidirectional", "side": "right", "x": 0.978, "y": 0.943, "nominal_draw_width": 2.25}
       ],
       "review_markers": [],
       "preview": "../raster/svr.png.b64",
@@ -75,8 +75,8 @@
       "geometry_status": "needs_review",
       "anchor_status": "approved",
       "anchors": [
-        {"id": "material-upper", "medium": "material", "direction": "bidirectional", "side": "right", "x": 1.0, "y": 0.354, "nominal_draw_width": 2.5},
-        {"id": "material-lower", "medium": "material", "direction": "bidirectional", "side": "right", "x": 1.0, "y": 0.212, "nominal_draw_width": 2.5}
+        {"id": "material-upper", "medium": "material", "direction": "bidirectional", "side": "right", "x": 1.0, "y": 0.354, "nominal_draw_width": 2.25},
+        {"id": "material-lower", "medium": "material", "direction": "bidirectional", "side": "right", "x": 1.0, "y": 0.212, "nominal_draw_width": 2.25}
       ],
       "review_markers": [],
       "preview": "../raster/catchbox.png.b64",

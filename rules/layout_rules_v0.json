@@ -23,7 +23,14 @@
       "frame_required": true,
       "applies_to_all_models": true,
       "placement": "frame_bottom_on_floor_line",
-      "geometry_scope": "complete_model_space_assembly"
+      "geometry_scope": "complete_model_space_assembly",
+      "frame_symbol": {
+        "left_leg_x_ratio": 0.08,
+        "right_leg_x_ratio": 0.92,
+        "top_y_ratio": 0.76,
+        "foot_width_mm": 6,
+        "line_width_mm": 0.75
+      }
     }
   },
   "mounting_rules": [
@@ -53,6 +60,25 @@
       "transform_component_and_anchors_together": true
     }
   ],
+  "conveying_route_style": {
+    "applies_to": [
+      "vacuum_air",
+      "dried_material",
+      "undried_material",
+      "gravity_dried_material",
+      "discharge"
+    ],
+    "stroke_width_mm": 2.25,
+    "previous_stroke_width_mm": 2.5,
+    "reduction_percent": 10,
+    "excludes": ["drying_air"]
+  },
+  "shared_vacuum_header": {
+    "shared_blower": true,
+    "branch_connection": "tee",
+    "branch_per_SVR": true,
+    "header_extension_policy": "extend_to_furthest_receiver"
+  },
   "process_air_circuit": {
     "id": "DFD_DH_STANDARD",
     "medium": "drying_air",

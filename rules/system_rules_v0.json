@@ -4,23 +4,28 @@
     "vacuum_air": {
       "colour": "#35C4CF",
       "description": "Vacuum conveying air",
-      "confirmed_direction": "SVR to LT"
+      "confirmed_direction": "SVR to LT",
+      "nominal_draw_width_mm": 2.25
     },
     "dried_material": {
       "colour": "#D52AA3",
-      "description": "Dried material under vacuum conveying"
+      "description": "Dried material under vacuum conveying",
+      "nominal_draw_width_mm": 2.25
     },
     "undried_material": {
       "colour": "#42A846",
-      "description": "Undried material"
+      "description": "Undried material",
+      "nominal_draw_width_mm": 2.25
     },
     "gravity_dried_material": {
       "colour": "#D52AA3",
-      "description": "Dried material from DH into catchbox"
+      "description": "Dried material from DH into catchbox",
+      "nominal_draw_width_mm": 2.25
     },
     "discharge": {
       "colour": "#D52AA3",
-      "description": "Receiver discharge into destination equipment"
+      "description": "Receiver discharge into destination equipment",
+      "nominal_draw_width_mm": 2.25
     },
     "drying_air": {
       "colour": "#222222",
@@ -68,6 +73,17 @@
       "medium": "drying_air",
       "source_families": ["DH"],
       "target_families": ["DFD"],
+      "status": "confirmed"
+    }
+  ],
+  "network_rules": [
+    {
+      "id": "shared-vacuum-header",
+      "medium": "vacuum_air",
+      "topology": "shared_header",
+      "branch_connection": "tee",
+      "one_branch_per_SVR": true,
+      "shared_target_family": "LT",
       "status": "confirmed"
     }
   ],

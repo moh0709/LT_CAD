@@ -48,6 +48,16 @@ def test_machine_readable_svr_policy_matches_mount_contract() -> None:
     assert dh_requirement["frame_required"] is True
     assert dh_requirement["applies_to_all_models"] is True
     assert dh_requirement["placement"] == "frame_bottom_on_floor_line"
+    assert dh_requirement["frame_symbol"]["line_width_mm"] == 0.75
+    assert dh_requirement["frame_symbol"]["left_leg_x_ratio"] == 0.08
+    route_style = rules["conveying_route_style"]
+    assert route_style["stroke_width_mm"] == 2.25
+    assert route_style["reduction_percent"] == 10
+    assert "drying_air" in route_style["excludes"]
+    header = rules["shared_vacuum_header"]
+    assert header["shared_blower"] is True
+    assert header["branch_connection"] == "tee"
+    assert header["branch_per_SVR"] is True
     circuit = rules["process_air_circuit"]
     assert circuit["applies_to_all_DFD_DH_models"] is True
     assert circuit["dfd_connection_face"] == "top"
