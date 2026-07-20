@@ -14,9 +14,12 @@ VALID_ITEM_TYPES = {"component", "pipe_system", "option", "service", "unresolved
 def validate_quotation(quotation: dict[str, Any]) -> dict[str, list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
-    order_number = str(quotation.get("order_number", ""))
-    if not order_number.isdigit():
-        errors.append("order_number must contain digits only.")
+    order_number = quotation.get("order_number")
+    project_reference = quotation.get("project_reference")
+    if order_number is not None and not str(order_number).isdigit():
+        errors.append("order_number must contain digits only when provided.")
+    if order_number is None and not project_reference:
+        errors.append("A quotation requires an order_number or project_reference.")
 
     positions: set[int] = set()
     for item in quotation.get("items", []):

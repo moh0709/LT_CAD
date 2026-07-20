@@ -1,0 +1,120 @@
+{
+  "schema_version": "0.1.0",
+  "order_number": null,
+  "project_reference": "DRYING-CALCULATOR-2025",
+  "source_file": "Drying Calculator 2025.pdf",
+  "quotation_date": "2026-07-20",
+  "currency": "EUR",
+  "customer": "TBD",
+  "calculation": {
+    "material": "PA6",
+    "throughput_kg_h": 200.0,
+    "drying_temperature_c": 80,
+    "ambient_temperature_c": 20,
+    "residence_time_min": 240,
+    "required_process_airflow_m3_h": 338,
+    "required_heating_power_kw": 5.67,
+    "required_hopper_volume_l": 1231,
+    "hopper_mass_kg": 800.0,
+    "water_removal_kg_h": 0.80
+  },
+  "items": [
+    {
+      "position": 1,
+      "item_number": "101913",
+      "description": "Desiccant Flex Dryer DFD450",
+      "quantity": 1,
+      "type": "component",
+      "family": "DFD",
+      "model": "DFD450",
+      "source_page": 3,
+      "confidence": 1.0
+    },
+    {
+      "position": 2,
+      "item_number": "101632",
+      "description": "Drying Hopper DH1600, 1600 L",
+      "quantity": 1,
+      "type": "component",
+      "family": "DH",
+      "model": "DH1600",
+      "source_page": 3,
+      "confidence": 1.0
+    },
+    {
+      "position": 3,
+      "item_number": null,
+      "description": "External Heat Recovery EHR-100, 16.0 kW",
+      "quantity": 1,
+      "type": "component",
+      "family": "EHR",
+      "model": "EHR-100",
+      "source_page": 3,
+      "confidence": 1.0
+    },
+    {
+      "position": 4,
+      "item_number": "208042",
+      "description": "Catchbox DH15-12000, 3 x 50 mm, manual",
+      "quantity": 1,
+      "type": "component",
+      "family": "CATCHBOX",
+      "model": "DH15-12000-3X50-MANUAL",
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 5,
+      "item_number": "408201",
+      "description": "Pipe 6 m, 50 mm stainless steel",
+      "quantity": 10,
+      "type": "pipe_system",
+      "system_for": ["DFD450", "DH1600"],
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 6,
+      "item_number": "501304",
+      "description": "Pipe coupling 50 mm",
+      "quantity": 20,
+      "type": "option",
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 7,
+      "item_number": "544015",
+      "description": "Bend 90 degrees, 50 mm, R500 mm, stainless steel",
+      "quantity": 8,
+      "type": "option",
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 8,
+      "item_number": "204539",
+      "description": "Cyclone 10 L, 50 mm",
+      "quantity": 1,
+      "type": "option",
+      "placement_status": "unresolved_no_vacuum_station_quoted",
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 9,
+      "item_number": "208105",
+      "description": "Self-purifying filter LT3-LT6, 50 mm",
+      "quantity": 1,
+      "type": "option",
+      "placement_status": "unresolved_no_vacuum_station_quoted",
+      "source_page": 1,
+      "confidence": 1.0
+    }
+  ],
+  "design_decisions": [
+    "No SVR, extruder, LT blower or SVS is quoted; no conveying topology is inferred.",
+    "EHR-100 is inserted in the DFD-to-DH process-air supply duct.",
+    "Cyclone and self-purifying filter remain unplaced until a vacuum-conveying topology is specified."
+  ]
+}

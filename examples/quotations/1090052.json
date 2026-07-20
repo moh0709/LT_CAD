@@ -1,0 +1,65 @@
+{
+  "schema_version": "0.1.0",
+  "order_number": "1090052",
+  "source_file": "1090052 Quotation_dfd600.pdf",
+  "quotation_date": "2023-06-01",
+  "currency": "EUR",
+  "customer": "SIFEM",
+  "customer_reference": "Christian Bezou",
+  "agent": "MOH",
+  "items": [
+    {
+      "position": 1,
+      "item_number": "101915",
+      "description": "Desiccant Flex Dryer DFD600, Lab Dry, 3x400V 50Hz",
+      "quantity": 1,
+      "type": "component",
+      "family": "DFD",
+      "model": "DFD600",
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 2,
+      "item_number": "204354",
+      "description": "Pipe system for DFD600",
+      "quantity": 1,
+      "type": "pipe_system",
+      "system_for": ["DFD600", "DH1200-III"],
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 3,
+      "item_number": "101631",
+      "description": "Drying Hopper DH1200-III, including frame, control, heating and access door",
+      "quantity": 1,
+      "type": "component",
+      "family": "DH",
+      "model": "DH1200-III",
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 4,
+      "item_number": "101402",
+      "description": "Con-Evator SVR16/LT4-I, 400V, diameter 60",
+      "quantity": 1,
+      "type": "component",
+      "family": "SVR_LT_ASSEMBLY",
+      "model": "SVR16/LT4-I",
+      "subcomponents": [
+        {"family": "SVR", "model": "SVR16"},
+        {"family": "LT", "model": "LT4-I"}
+      ],
+      "source_page": 1,
+      "confidence": 1.0
+    }
+  ],
+  "design_decisions": [
+    "Con-Evator is a one-to-one SVR16 and LT4-I assembly.",
+    "SVR16 is mounted on the DH1200-III and receives undried material from a customer source.",
+    "No catchbox, extruder or dried-material conveying destination is quoted.",
+    "The DFD600 and DH1200-III are connected by the standard closed process-air supply and return ducts."
+  ]
+}

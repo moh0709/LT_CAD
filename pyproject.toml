@@ -26,6 +26,7 @@ lt-cad-review-svg = "lt_cad.review:main"
 lt-cad-validate-quotation = "lt_cad.quotation:main"
 lt-cad-layout = "lt_cad.layout:main"
 lt-cad-baseline = "lt_cad.baseline:main"
+lt-cad-proposal = "lt_cad.proposal:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
