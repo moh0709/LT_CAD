@@ -27,6 +27,13 @@ def _one_component(quotation: dict[str, Any], family: str) -> dict[str, Any]:
     return matches[0]
 
 
+def _vacuum_system_for_receiver_count(receiver_count: int) -> str:
+    """Select the only permitted vacuum architecture for the receiver count."""
+    if receiver_count < 1:
+        raise ValueError("A conveying system requires at least one SVR.")
+    return "Con-Evator" if receiver_count == 1 else "Micro Scan"
+
+
 def create_drying_proposal_svg(
     quotation: dict[str, Any], repo_root: Path, output: Path
 ) -> None:
@@ -179,7 +186,7 @@ def create_drying_proposal_svg(
 def create_con_evator_proposal_svg(
     quotation: dict[str, Any], repo_root: Path, output: Path
 ) -> None:
-    """Render a standard DFD/DH system with one dedicated Con-Evator."""
+    """Render a standard DFD/DH system with the receiver-count vacuum architecture."""
     validation = validate_quotation(quotation)
     if validation["errors"]:
         raise ValueError("; ".join(validation["errors"]))
@@ -189,6 +196,11 @@ def create_con_evator_proposal_svg(
     con_evator = _one_component(quotation, "SVR_LT_ASSEMBLY")
     additions = {item["family"]: item for item in quotation.get("design_additions", [])}
     include_dried_destination = {"CATCHBOX", "EXT", "SVR"}.issubset(additions)
+    receiver_count = 1 + int(include_dried_destination)
+    vacuum_system = _vacuum_system_for_receiver_count(receiver_count)
+    use_micro_scan = vacuum_system == "Micro Scan"
+    if use_micro_scan and additions.get("SVS", {}).get("model") != "SVS-I/LT6-I":
+        raise ValueError("Two or more SVRs require a registered Micro Scan SVS station.")
     reference = str(quotation["order_number"])
     customer = str(quotation.get("customer") or "TBD")
     agent = str(quotation.get("agent") or "TBD")
@@ -211,6 +223,7 @@ def create_con_evator_proposal_svg(
 
     grid = Grid(layout_rules["grid"]["unit_mm"])
     svr_policy = layout_rules["component_size_policies"]["SVR"]
+    svs_policy = layout_rules["component_size_policies"]["SVS"]
     mount_rules = {
         rule["host_family"]: rule for rule in layout_rules["mounting_rules"]
     }
@@ -218,7 +231,12 @@ def create_con_evator_proposal_svg(
         "source": grid.box(65, 125, 25, 35),
         "dh": grid.box(110, 60, 35, 100),
         "dfd": grid.box(180, 105, 45, 55),
-        "lt": grid.box(365, 140, 20, 20),
+        "station": grid.box(
+            365,
+            140,
+            svs_policy["width_mm"] if use_micro_scan else 20,
+            svs_policy["height_mm"] if use_micro_scan else 20,
+        ),
     }
     boxes["svr"] = grid.mounted_on_top(
         boxes["dh"],
@@ -299,13 +317,23 @@ def create_con_evator_proposal_svg(
         (boxes["source"].center_x, svr_material[1]),
         svr_material,
     ]
-    lt_vacuum_port = (boxes["lt"].x + boxes["lt"].width * 0.25, boxes["lt"].y)
+    station_vacuum_port = (
+        anchor_point(
+            registered_anchor("svs-microscan-reference", "vacuum-header-inlet"),
+            boxes["station"].tuple(),
+        )
+        if use_micro_scan
+        else (
+            boxes["station"].x + boxes["station"].width * 0.25,
+            boxes["station"].y,
+        )
+    )
     vacuum_route = [
         svr_vacuum,
         (100, svr_vacuum[1]),
         (100, 15),
-        (lt_vacuum_port[0], 15),
-        lt_vacuum_port,
+        (station_vacuum_port[0], 15),
+        station_vacuum_port,
     ]
     if include_dried_destination:
         dried_route = [
@@ -325,7 +353,7 @@ def create_con_evator_proposal_svg(
     obstacles = {name: box.tuple() for name, box in boxes.items()}
     conveying_routes = {
         "undried-material": (undried_route, {"source", "svr"}),
-        "vacuum-header": (vacuum_route, {"svr", "lt"}),
+        "vacuum-header": (vacuum_route, {"svr", "station"}),
     }
     if include_dried_destination:
         conveying_routes.update(
@@ -369,7 +397,15 @@ def create_con_evator_proposal_svg(
         _raster_b64(repo_root / "component_library/raster/catchbox.png.b64", *boxes["catchbox"].tuple()) if include_dried_destination else "",
         _raster_b64(repo_root / "component_library/raster/extruder.png.b64", *boxes["ext"].tuple()) if include_dried_destination else "",
         _raster_b64(repo_root / "component_library/raster/svr.png.b64", *boxes["ext_svr"].tuple(), mirror_x=True) if include_dried_destination else "",
-        _raster_b64(repo_root / "component_library/raster/lt-family.png.b64", *boxes["lt"].tuple()),
+        _raster_b64(
+            repo_root
+            / (
+                "component_library/raster/svs.png.b64"
+                if use_micro_scan
+                else "component_library/raster/lt-family.png.b64"
+            ),
+            *boxes["station"].tuple(),
+        ),
         duct(supply_route, "drying-air-supply"),
         duct(return_route, "drying-air-return"),
         f'<line data-flow-arrow="drying-air-supply" x1="{supply_arrow[0][0]}" y1="{supply_arrow[0][1]}" x2="{supply_arrow[1][0]}" y2="{supply_arrow[1][1]}" stroke="#555" stroke-width=".4" marker-end="url(#arrow-process)"/>',
@@ -383,7 +419,7 @@ def create_con_evator_proposal_svg(
         '<text x="129" y="181" class="equipment" text-anchor="middle">CATCHBOX 50 mm</text>' if include_dried_destination else "",
         f'<text x="202.5" y="166" class="equipment" text-anchor="middle">{html.escape(dfd["model"])}</text>',
         '<text x="307.5" y="166" class="equipment" text-anchor="middle">EXT 1 - CUSTOMER EXTRUDER</text>' if include_dried_destination else "",
-        '<text x="375" y="166" class="equipment" text-anchor="middle">LT4-I</text>',
+        '<text x="380" y="166" class="equipment" text-anchor="middle">MICRO SCAN SVS / LT6-I</text>' if use_micro_scan else '<text x="375" y="166" class="equipment" text-anchor="middle">LT4-I</text>',
         '<text x="127.5" y="26" class="equipment" text-anchor="middle">SVR16</text>',
         '<text x="307.5" y="76" class="equipment" text-anchor="middle">SVR16</text>' if include_dried_destination else "",
         _callout(1, 229, 96, 207, 116),
@@ -391,14 +427,14 @@ def create_con_evator_proposal_svg(
         _callout(3, 151, 139, 135, 150) if include_dried_destination else "",
         _callout(4, 146, 35, 131, 49),
         _callout(4, 285, 73, 303, 90) if include_dried_destination else "",
-        _callout(4, 393, 128, 376, 144),
+        _callout(4, 405, 128, 373, 145),
         _callout(5, 340, 118, 318, 134) if include_dried_destination else "",
         _callout(6, 175, 68, 191, 84),
         '<g class="legend">',
         '<circle cx="20" cy="181" r="5" class="callout-circle"/><text x="20" y="182.5" class="callout-number">1</text><text x="30" y="182.5">Desiccant Flex Dryer DFD600</text>',
         '<circle cx="20" cy="193" r="5" class="callout-circle"/><text x="20" y="194.5" class="callout-number">2</text><text x="30" y="194.5">Drying Hopper DH1200-III with frame</text>',
         '<circle cx="20" cy="205" r="5" class="callout-circle"/><text x="20" y="206.5" class="callout-number">3</text><text x="30" y="206.5">Catchbox 50 mm</text>',
-        '<circle cx="20" cy="217" r="5" class="callout-circle"/><text x="20" y="218.5" class="callout-number">4</text><text x="30" y="218.5">Con-Evator SVR16 / LT4-I</text>',
+        '<circle cx="20" cy="217" r="5" class="callout-circle"/><text x="20" y="218.5" class="callout-number">4</text><text x="30" y="218.5">Scanning SVRs / Micro Scan SVS / LT6-I</text>' if use_micro_scan else '<circle cx="20" cy="217" r="5" class="callout-circle"/><text x="20" y="218.5" class="callout-number">4</text><text x="30" y="218.5">Con-Evator SVR16 / LT4-I</text>',
         '<circle cx="20" cy="229" r="5" class="callout-circle"/><text x="20" y="230.5" class="callout-number">5</text><text x="30" y="230.5">Customer extruder EXT 1</text>',
         '<circle cx="20" cy="241" r="5" class="callout-circle"/><text x="20" y="242.5" class="callout-number">6</text><text x="30" y="242.5">Interconnecting duct system DFD600</text>',
         '</g>',
@@ -414,8 +450,8 @@ def create_con_evator_proposal_svg(
         f'<text x="133" y="271" class="small">Agent: {html.escape(agent)}</text>',
         f'<text x="320" y="271" class="small">Date: {html.escape(date)}</text>',
         '<text x="380" y="271" class="small">Scale: NTS</text>',
-        '<text x="133" y="286" class="small">Source: Quotation 1090052 + approved conveying addition</text>',
-        f'<text x="330" y="288" font-size="8">{html.escape(reference)}_1_R01</text>',
+        '<text x="133" y="286" class="small">Source: Quotation 1090052 + approved Micro Scan override</text>',
+        f'<text x="330" y="288" font-size="8">{html.escape(reference)}_1_R02</text>',
         '</svg>',
     ]
     output.parent.mkdir(parents=True, exist_ok=True)

@@ -57,11 +57,11 @@
     }
   ],
   "design_decisions": [
-    "Con-Evator is a one-to-one SVR16 and LT4-I assembly.",
+    "The quoted Con-Evator is superseded by a user-approved Micro Scan configuration because two SVRs share one vacuum system.",
     "SVR16 is mounted on the DH1200-III and receives undried material from a customer source.",
     "A user-approved 50 mm catchbox is mounted below the DH1200-III.",
     "Dried material is conveyed from the catchbox to a receiver mounted on customer extruder EXT 1.",
-    "The existing vacuum header is extended with a T branch to the extruder receiver.",
+    "Both scanning SVRs connect to one shared vacuum header and Micro Scan SVS-I/LT6-I station.",
     "The DFD600 and DH1200-III are connected by the standard closed process-air supply and return ducts."
   ],
   "design_additions": [
@@ -87,6 +87,14 @@
       "quantity": 1,
       "source": "user_approved_addition",
       "mounted_on": "ext-1"
+    },
+    {
+      "id": "micro-scan-station-1",
+      "family": "SVS",
+      "model": "SVS-I/LT6-I",
+      "quantity": 1,
+      "source": "user_approved_override",
+      "replaces_quoted_model": "SVR16/LT4-I"
     }
   ]
 }

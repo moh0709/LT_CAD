@@ -1,7 +1,10 @@
 import json
 from pathlib import Path
 
-from lt_cad.proposal import create_con_evator_proposal_svg
+from lt_cad.proposal import (
+    _vacuum_system_for_receiver_count,
+    create_con_evator_proposal_svg,
+)
 from lt_cad.quotation import validate_quotation
 
 
@@ -23,7 +26,7 @@ def test_1090052_generates_drying_and_extruder_conveying_topology(tmp_path: Path
         "DFD600",
         "DH1200-III",
         "SVR16",
-        "LT4-I",
+        "MICRO SCAN SVS / LT6-I",
         "CATCHBOX 50 mm",
         "EXT 1",
     ):
@@ -34,7 +37,9 @@ def test_1090052_generates_drying_and_extruder_conveying_topology(tmp_path: Path
     assert 'data-route="dried-material-ext1"' in svg
     assert 'data-route="drying-air-supply"' in svg
     assert 'data-route="drying-air-return"' in svg
-    assert "MICRO SCAN" not in svg
+    assert "MICRO SCAN" in svg
+    assert "Con-Evator" not in svg
+    assert "LT4-I" not in svg
     assert "CUSTOMER EXTRUDER" in svg
 
 
@@ -43,3 +48,10 @@ def test_1090052_design_additions_are_machine_readable() -> None:
     assert additions["CATCHBOX"]["model"] == "CATCHBOX-50"
     assert additions["CATCHBOX"]["mounted_below"] == "DH1200-III"
     assert additions["SVR"]["mounted_on"] == "ext-1"
+    assert additions["SVS"]["model"] == "SVS-I/LT6-I"
+
+
+def test_two_receivers_can_never_select_con_evator() -> None:
+    assert _vacuum_system_for_receiver_count(1) == "Con-Evator"
+    assert _vacuum_system_for_receiver_count(2) == "Micro Scan"
+    assert _vacuum_system_for_receiver_count(8) == "Micro Scan"
