@@ -15,16 +15,31 @@ def test_1090052_quotation_is_valid() -> None:
     assert validate_quotation(QUOTATION) == {"errors": [], "warnings": []}
 
 
-def test_1090052_generates_one_to_one_con_evator_topology(tmp_path: Path) -> None:
+def test_1090052_generates_drying_and_extruder_conveying_topology(tmp_path: Path) -> None:
     output = tmp_path / "1090052.svg"
     create_con_evator_proposal_svg(QUOTATION, ROOT, output)
     svg = output.read_text(encoding="utf-8")
-    for label in ("DFD600", "DH1200-III", "SVR16", "LT4-I"):
+    for label in (
+        "DFD600",
+        "DH1200-III",
+        "SVR16",
+        "LT4-I",
+        "CATCHBOX 50 mm",
+        "EXT 1",
+    ):
         assert label in svg
-    assert 'data-route="con-evator-vacuum"' in svg
+    assert 'data-route="vacuum-header"' in svg
+    assert 'data-route="vacuum-tee-ext1"' in svg
     assert 'data-route="undried-material"' in svg
+    assert 'data-route="dried-material-ext1"' in svg
     assert 'data-route="drying-air-supply"' in svg
     assert 'data-route="drying-air-return"' in svg
     assert "MICRO SCAN" not in svg
-    assert "CATCHBOX" not in svg
-    assert "EXT 1" not in svg
+    assert "CUSTOMER EXTRUDER" in svg
+
+
+def test_1090052_design_additions_are_machine_readable() -> None:
+    additions = {item["family"]: item for item in QUOTATION["design_additions"]}
+    assert additions["CATCHBOX"]["model"] == "CATCHBOX-50"
+    assert additions["CATCHBOX"]["mounted_below"] == "DH1200-III"
+    assert additions["SVR"]["mounted_on"] == "ext-1"

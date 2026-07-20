@@ -59,7 +59,34 @@
   "design_decisions": [
     "Con-Evator is a one-to-one SVR16 and LT4-I assembly.",
     "SVR16 is mounted on the DH1200-III and receives undried material from a customer source.",
-    "No catchbox, extruder or dried-material conveying destination is quoted.",
+    "A user-approved 50 mm catchbox is mounted below the DH1200-III.",
+    "Dried material is conveyed from the catchbox to a receiver mounted on customer extruder EXT 1.",
+    "The existing vacuum header is extended with a T branch to the extruder receiver.",
     "The DFD600 and DH1200-III are connected by the standard closed process-air supply and return ducts."
+  ],
+  "design_additions": [
+    {
+      "id": "catchbox-1",
+      "family": "CATCHBOX",
+      "model": "CATCHBOX-50",
+      "quantity": 1,
+      "source": "user_approved_addition",
+      "mounted_below": "DH1200-III"
+    },
+    {
+      "id": "ext-1",
+      "family": "EXT",
+      "model": "EXT 1",
+      "quantity": 1,
+      "source": "customer_equipment"
+    },
+    {
+      "id": "ext-1-svr",
+      "family": "SVR",
+      "model": "SVR16",
+      "quantity": 1,
+      "source": "user_approved_addition",
+      "mounted_on": "ext-1"
+    }
   ]
 }

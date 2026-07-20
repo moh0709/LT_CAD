@@ -10,10 +10,14 @@ from typing import Any
 
 from lt_cad.anchors import anchor_point
 from lt_cad.baseline import _callout, _dh_floor_frame
-from lt_cad.grid import Grid
+from lt_cad.grid import Grid, validate_top_mount
 from lt_cad.layout import _nested_svg, _raster_b64
 from lt_cad.quotation import component_instances, validate_quotation
-from lt_cad.routing import rounded_orthogonal_path, route_direction_arrow
+from lt_cad.routing import (
+    rounded_orthogonal_path,
+    route_collisions,
+    route_direction_arrow,
+)
 
 
 def _one_component(quotation: dict[str, Any], family: str) -> dict[str, Any]:
@@ -183,6 +187,8 @@ def create_con_evator_proposal_svg(
     dfd = _one_component(quotation, "DFD")
     dh = _one_component(quotation, "DH")
     con_evator = _one_component(quotation, "SVR_LT_ASSEMBLY")
+    additions = {item["family"]: item for item in quotation.get("design_additions", [])}
+    include_dried_destination = {"CATCHBOX", "EXT", "SVR"}.issubset(additions)
     reference = str(quotation["order_number"])
     customer = str(quotation.get("customer") or "TBD")
     agent = str(quotation.get("agent") or "TBD")
@@ -205,21 +211,37 @@ def create_con_evator_proposal_svg(
 
     grid = Grid(layout_rules["grid"]["unit_mm"])
     svr_policy = layout_rules["component_size_policies"]["SVR"]
-    mount_rule = next(
-        rule for rule in layout_rules["mounting_rules"] if rule["host_family"] == "DH"
-    )
+    mount_rules = {
+        rule["host_family"]: rule for rule in layout_rules["mounting_rules"]
+    }
     boxes = {
-        "source": grid.box(90, 125, 25, 35),
-        "dh": grid.box(140, 60, 35, 100),
-        "dfd": grid.box(215, 105, 45, 55),
-        "lt": grid.box(330, 135, 25, 25),
+        "source": grid.box(65, 125, 25, 35),
+        "dh": grid.box(110, 60, 35, 100),
+        "dfd": grid.box(180, 105, 45, 55),
+        "lt": grid.box(365, 140, 20, 20),
     }
     boxes["svr"] = grid.mounted_on_top(
         boxes["dh"],
         svr_policy["width_mm"],
         svr_policy["height_mm"],
-        host_surface_offset=mount_rule["host_mounting_plane_offset_from_box_top_mm"],
+        host_surface_offset=mount_rules["DH"]["host_mounting_plane_offset_from_box_top_mm"],
     )
+    if include_dried_destination:
+        boxes["catchbox"] = grid.box(120, 135, 20, 35)
+        boxes["ext"] = grid.box(285, 120, 45, 40)
+        boxes["ext_svr"] = grid.mounted_on_top(
+            boxes["ext"],
+            svr_policy["width_mm"],
+            svr_policy["height_mm"],
+            host_surface_offset=mount_rules["EXT"]["host_mounting_plane_offset_from_box_top_mm"],
+        )
+        mount_errors = validate_top_mount(
+            boxes["ext_svr"],
+            boxes["ext"],
+            host_surface_offset=mount_rules["EXT"]["host_mounting_plane_offset_from_box_top_mm"],
+        )
+        if mount_errors:
+            raise ValueError(f"Extruder SVR mounting invalid: {mount_errors}")
     dh_frame_policy = layout_rules["component_requirements"]["DH"]["frame_symbol"]
     drying_policy = layout_rules["process_air_circuit"]
     route_width = layout_rules["conveying_route_style"]["stroke_width_mm"]
@@ -252,6 +274,21 @@ def create_con_evator_proposal_svg(
         boxes["svr"].tuple(),
         mirror_x=True,
     )
+    if include_dried_destination:
+        catchbox_material = anchor_point(
+            registered_anchor("catchbox-reference-side", "material-upper"),
+            boxes["catchbox"].tuple(),
+        )
+        ext_material = anchor_point(
+            registered_anchor("svr-reference-front", "material-side"),
+            boxes["ext_svr"].tuple(),
+            mirror_x=True,
+        )
+        ext_vacuum = anchor_point(
+            registered_anchor("svr-reference-front", "vacuum-top"),
+            boxes["ext_svr"].tuple(),
+            mirror_x=True,
+        )
 
     supply_route = [dfd_supply, (dfd_supply[0], dh_supply[1]), dh_supply]
     return_route = [dh_return, (dfd_return[0], dh_return[1]), dfd_return]
@@ -265,11 +302,45 @@ def create_con_evator_proposal_svg(
     lt_vacuum_port = (boxes["lt"].x + boxes["lt"].width * 0.25, boxes["lt"].y)
     vacuum_route = [
         svr_vacuum,
-        (130, svr_vacuum[1]),
-        (130, 15),
+        (100, svr_vacuum[1]),
+        (100, 15),
         (lt_vacuum_port[0], 15),
         lt_vacuum_port,
     ]
+    if include_dried_destination:
+        dried_route = [
+            catchbox_material,
+            (155, catchbox_material[1]),
+            (155, 178),
+            (278, 178),
+            (278, ext_material[1]),
+            ext_material,
+        ]
+        ext_vacuum_tee = [
+            ext_vacuum,
+            (270, ext_vacuum[1]),
+            (270, 15),
+        ]
+
+    obstacles = {name: box.tuple() for name, box in boxes.items()}
+    conveying_routes = {
+        "undried-material": (undried_route, {"source", "svr"}),
+        "vacuum-header": (vacuum_route, {"svr", "lt"}),
+    }
+    if include_dried_destination:
+        conveying_routes.update(
+            {
+                "dried-material-ext1": (
+                    dried_route,
+                    {"catchbox", "dh", "ext_svr"},
+                ),
+                "vacuum-tee-ext1": (ext_vacuum_tee, {"ext_svr"}),
+            }
+        )
+    for route_id, (points, ignored) in conveying_routes.items():
+        collisions = route_collisions(points, obstacles, ignore=ignored, clearance=1)
+        if collisions:
+            raise ValueError(f"Route {route_id} crosses component borders: {collisions}")
 
     def duct(points: list[tuple[float, float]], route_id: str) -> str:
         path = rounded_orthogonal_path(points, drying_policy["bend_radius_mm"])
@@ -286,39 +357,52 @@ def create_con_evator_proposal_svg(
         '<rect width="420" height="297" fill="white"/>',
         '<style>text{font-family:Arial,sans-serif;fill:#111}.component path{vector-effect:non-scaling-stroke;stroke-width:.28!important}.equipment{font-size:4px;font-weight:bold}.small{font-size:3px}.legend{font-size:3.3px}.callout-circle{fill:white;stroke:#ff3030;stroke-width:.35}.callout-line{stroke:#ff3030;stroke-width:.35}.callout-number{font-size:4px;fill:#ff3030;text-anchor:middle}.title{font-size:4.5px}.route{fill:none;stroke-linejoin:round}.process-air{fill:none;stroke-linecap:butt;stroke-linejoin:round}.ground{stroke:#111;stroke-width:.45}</style>',
         '<defs><marker id="arrow-process" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#222"/></marker></defs>',
-        '<line x1="65" y1="160" x2="375" y2="160" class="ground"/>',
-        '<path d="' + ' '.join(f'M{x} 159 l-4 6' for x in range(68, 376, 8)) + '" stroke="#777" stroke-width=".3" fill="none"/>',
-        '<rect x="90" y="125" width="25" height="35" fill="none" stroke="#111" stroke-width=".45"/>',
-        '<path d="M90 138 h25 M90 143 h25 M90 148 h25 M90 153 h25" stroke="#31D843" stroke-width="1.1"/>',
-        '<line x1="102.5" y1="118" x2="102.5" y2="158" stroke="#111" stroke-width=".65"/>',
+        '<line x1="55" y1="160" x2="395" y2="160" class="ground"/>',
+        '<path d="' + ' '.join(f'M{x} 159 l-4 6' for x in range(58, 396, 8)) + '" stroke="#777" stroke-width=".3" fill="none"/>',
+        '<rect x="65" y="125" width="25" height="35" fill="none" stroke="#111" stroke-width=".45"/>',
+        '<path d="M65 138 h25 M65 143 h25 M65 148 h25 M65 153 h25" stroke="#31D843" stroke-width="1.1"/>',
+        '<line x1="77.5" y1="118" x2="77.5" y2="158" stroke="#111" stroke-width=".65"/>',
         _nested_svg(repo_root / "component_library/previews/dh-family-front.svg", *boxes["dh"].tuple()),
         _dh_floor_frame(boxes["dh"], dh_frame_policy),
         _nested_svg(repo_root / "component_library/previews/dfd-family-left-side.svg", *boxes["dfd"].tuple()),
         _raster_b64(repo_root / "component_library/raster/svr.png.b64", *boxes["svr"].tuple(), mirror_x=True),
+        _raster_b64(repo_root / "component_library/raster/catchbox.png.b64", *boxes["catchbox"].tuple()) if include_dried_destination else "",
+        _raster_b64(repo_root / "component_library/raster/extruder.png.b64", *boxes["ext"].tuple()) if include_dried_destination else "",
+        _raster_b64(repo_root / "component_library/raster/svr.png.b64", *boxes["ext_svr"].tuple(), mirror_x=True) if include_dried_destination else "",
         _raster_b64(repo_root / "component_library/raster/lt-family.png.b64", *boxes["lt"].tuple()),
         duct(supply_route, "drying-air-supply"),
         duct(return_route, "drying-air-return"),
         f'<line data-flow-arrow="drying-air-supply" x1="{supply_arrow[0][0]}" y1="{supply_arrow[0][1]}" x2="{supply_arrow[1][0]}" y2="{supply_arrow[1][1]}" stroke="#555" stroke-width=".4" marker-end="url(#arrow-process)"/>',
         f'<line data-flow-arrow="drying-air-return" x1="{return_arrow[0][0]}" y1="{return_arrow[0][1]}" x2="{return_arrow[1][0]}" y2="{return_arrow[1][1]}" stroke="#555" stroke-width=".4" marker-end="url(#arrow-process)"/>',
         f'<path data-route="undried-material" d="{rounded_orthogonal_path(undried_route, 4)}" class="route" stroke="#31D843" stroke-width="{route_width}"/>',
-        f'<path data-route="con-evator-vacuum" d="{rounded_orthogonal_path(vacuum_route, 5)}" class="route" stroke="#35C4CF" stroke-width="{route_width}"/>',
-        '<text x="102.5" y="170" class="equipment" text-anchor="middle">CUSTOMER MATERIAL SOURCE</text>',
-        f'<text x="157.5" y="166" class="equipment" text-anchor="middle">{html.escape(dh["model"])}</text>',
-        f'<text x="237.5" y="166" class="equipment" text-anchor="middle">{html.escape(dfd["model"])}</text>',
-        '<text x="342.5" y="166" class="equipment" text-anchor="middle">LT4-I</text>',
-        '<text x="157.5" y="26" class="equipment" text-anchor="middle">SVR16</text>',
-        _callout(1, 258, 96, 242, 116),
-        _callout(2, 139, 86, 149, 109),
-        _callout(3, 176, 35, 161, 49),
-        _callout(3, 360, 126, 343, 143),
-        _callout(4, 205, 68, 221, 84),
+        f'<path data-route="vacuum-header" d="{rounded_orthogonal_path(vacuum_route, 5)}" class="route" stroke="#35C4CF" stroke-width="{route_width}"/>',
+        f'<path data-route="vacuum-tee-ext1" d="{rounded_orthogonal_path(ext_vacuum_tee, 4)}" class="route" stroke="#35C4CF" stroke-width="{route_width}"/>' if include_dried_destination else "",
+        f'<path data-route="dried-material-ext1" d="{rounded_orthogonal_path(dried_route, 5)}" class="route" stroke="#D52AA3" stroke-width="{route_width}"/>' if include_dried_destination else "",
+        '<text x="77.5" y="170" class="equipment" text-anchor="middle">CUSTOMER MATERIAL SOURCE</text>',
+        f'<text x="127.5" y="166" class="equipment" text-anchor="middle">{html.escape(dh["model"])}</text>',
+        '<text x="129" y="181" class="equipment" text-anchor="middle">CATCHBOX 50 mm</text>' if include_dried_destination else "",
+        f'<text x="202.5" y="166" class="equipment" text-anchor="middle">{html.escape(dfd["model"])}</text>',
+        '<text x="307.5" y="166" class="equipment" text-anchor="middle">EXT 1 - CUSTOMER EXTRUDER</text>' if include_dried_destination else "",
+        '<text x="375" y="166" class="equipment" text-anchor="middle">LT4-I</text>',
+        '<text x="127.5" y="26" class="equipment" text-anchor="middle">SVR16</text>',
+        '<text x="307.5" y="76" class="equipment" text-anchor="middle">SVR16</text>' if include_dried_destination else "",
+        _callout(1, 229, 96, 207, 116),
+        _callout(2, 106, 86, 119, 109),
+        _callout(3, 151, 139, 135, 150) if include_dried_destination else "",
+        _callout(4, 146, 35, 131, 49),
+        _callout(4, 285, 73, 303, 90) if include_dried_destination else "",
+        _callout(4, 393, 128, 376, 144),
+        _callout(5, 340, 118, 318, 134) if include_dried_destination else "",
+        _callout(6, 175, 68, 191, 84),
         '<g class="legend">',
-        '<circle cx="20" cy="185" r="5" class="callout-circle"/><text x="20" y="186.5" class="callout-number">1</text><text x="30" y="186.5">Desiccant Flex Dryer DFD600</text>',
-        '<circle cx="20" cy="197" r="5" class="callout-circle"/><text x="20" y="198.5" class="callout-number">2</text><text x="30" y="198.5">Drying Hopper DH1200-III with frame</text>',
-        '<circle cx="20" cy="209" r="5" class="callout-circle"/><text x="20" y="210.5" class="callout-number">3</text><text x="30" y="210.5">Con-Evator SVR16 / LT4-I</text>',
-        '<circle cx="20" cy="221" r="5" class="callout-circle"/><text x="20" y="222.5" class="callout-number">4</text><text x="30" y="222.5">Interconnecting duct system DFD600</text>',
+        '<circle cx="20" cy="181" r="5" class="callout-circle"/><text x="20" y="182.5" class="callout-number">1</text><text x="30" y="182.5">Desiccant Flex Dryer DFD600</text>',
+        '<circle cx="20" cy="193" r="5" class="callout-circle"/><text x="20" y="194.5" class="callout-number">2</text><text x="30" y="194.5">Drying Hopper DH1200-III with frame</text>',
+        '<circle cx="20" cy="205" r="5" class="callout-circle"/><text x="20" y="206.5" class="callout-number">3</text><text x="30" y="206.5">Catchbox 50 mm</text>',
+        '<circle cx="20" cy="217" r="5" class="callout-circle"/><text x="20" y="218.5" class="callout-number">4</text><text x="30" y="218.5">Con-Evator SVR16 / LT4-I</text>',
+        '<circle cx="20" cy="229" r="5" class="callout-circle"/><text x="20" y="230.5" class="callout-number">5</text><text x="30" y="230.5">Customer extruder EXT 1</text>',
+        '<circle cx="20" cy="241" r="5" class="callout-circle"/><text x="20" y="242.5" class="callout-number">6</text><text x="30" y="242.5">Interconnecting duct system DFD600</text>',
         '</g>',
-        '<g class="small"><text x="180" y="203">Route Description</text><line x1="180" y1="211" x2="203" y2="211" stroke="#35C4CF" stroke-width="1.5"/><text x="208" y="212">Vacuum pipe line</text><line x1="180" y1="219" x2="203" y2="219" stroke="#31D843" stroke-width="1.5"/><text x="208" y="220">Undried material line</text><line x1="180" y1="227" x2="203" y2="227" stroke="#222" stroke-width="2.2"/><line x1="180" y1="227" x2="203" y2="227" stroke="white" stroke-width="1.4"/><text x="208" y="228">Closed process-air circuit</text></g>',
+        '<g class="small"><text x="180" y="199">Route Description</text><line x1="180" y1="207" x2="203" y2="207" stroke="#35C4CF" stroke-width="1.5"/><text x="208" y="208">Vacuum pipe line</text><line x1="180" y1="215" x2="203" y2="215" stroke="#D52AA3" stroke-width="1.5"/><text x="208" y="216">Dried material line</text><line x1="180" y1="223" x2="203" y2="223" stroke="#31D843" stroke-width="1.5"/><text x="208" y="224">Undried material line</text><line x1="180" y1="231" x2="203" y2="231" stroke="#222" stroke-width="2.2"/><line x1="180" y1="231" x2="203" y2="231" stroke="white" stroke-width="1.4"/><text x="208" y="232">Closed process-air circuit</text></g>',
         '<rect x="5" y="250" width="410" height="42" fill="white" stroke="#111" stroke-width=".45"/>',
         '<rect x="5" y="250" width="125" height="42" fill="white" stroke="#111" stroke-width=".45"/>',
         '<text x="14" y="268" font-size="14" fill="#063ee8" style="fill:#063ee8;font-weight:bold;font-style:italic">Labotek</text>',
@@ -326,12 +410,12 @@ def create_con_evator_proposal_svg(
         '<line x1="130" y1="264" x2="415" y2="264" stroke="#111" stroke-width=".35"/>',
         '<line x1="130" y1="278" x2="415" y2="278" stroke="#111" stroke-width=".35"/>',
         f'<text x="133" y="258" class="small">Customer: {html.escape(customer)}</text>',
-        '<text x="133" y="262.5" class="title">Description: Principle Sketch - Standard Drying &amp; Con-Evator system</text>',
+        '<text x="133" y="262.5" class="title">Description: Principle Sketch - Standard Drying &amp; Conveying system</text>',
         f'<text x="133" y="271" class="small">Agent: {html.escape(agent)}</text>',
         f'<text x="320" y="271" class="small">Date: {html.escape(date)}</text>',
         '<text x="380" y="271" class="small">Scale: NTS</text>',
-        '<text x="133" y="286" class="small">Source: Quotation 1090052</text>',
-        f'<text x="330" y="288" font-size="8">{html.escape(reference)}_1_R00</text>',
+        '<text x="133" y="286" class="small">Source: Quotation 1090052 + approved conveying addition</text>',
+        f'<text x="330" y="288" font-size="8">{html.escape(reference)}_1_R01</text>',
         '</svg>',
     ]
     output.parent.mkdir(parents=True, exist_ok=True)
