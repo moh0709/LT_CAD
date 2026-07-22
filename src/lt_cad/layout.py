@@ -1,0 +1,167 @@
+"""Create an A3 component-layout review without unapproved piping."""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import html
+import json
+import re
+from pathlib import Path
+from typing import Any
+
+
+VIEWBOX = re.compile(r'viewBox="([^"]+)"')
+
+
+def _nested_svg(path: Path, x: float, y: float, width: float, height: float) -> str:
+    """Embed SVG geometry natively for reliable browser, Inkscape and PDF rendering."""
+    source = path.read_text(encoding="utf-8")
+    start = source.index("<svg")
+    body_start = source.index(">", start) + 1
+    body_end = source.rindex("</svg>")
+    match = VIEWBOX.search(source[start:body_start])
+    if not match:
+        raise ValueError(f"SVG has no viewBox: {path}")
+    return (
+        f'<svg class="component" x="{x}" y="{y}" width="{width}" height="{height}" '
+        f'viewBox="{match.group(1)}" preserveAspectRatio="xMidYMid meet">'
+        f'{source[body_start:body_end]}</svg>'
+    )
+
+
+def _raster_b64(
+    path: Path,
+    x: float,
+    y: float,
+    width: float,
+    height: float,
+    mirror_x: bool = False,
+) -> str:
+    encoded = path.read_text(encoding="ascii").strip()
+    # Validate stored content early rather than producing a silently broken drawing.
+    base64.b64decode(encoded, validate=True)
+    image = (
+        f'<image x="0" y="0" width="{width}" height="{height}" '
+        f'preserveAspectRatio="xMidYMid meet" href="data:image/png;base64,{encoded}" '
+        f'xlink:href="data:image/png;base64,{encoded}"/>'
+    )
+    transform = f"translate({x + width:g} {y:g}) scale(-1 1)" if mirror_x else f"translate({x:g} {y:g})"
+    return f'<g transform="{transform}">{image}</g>'
+
+
+def validate_layout(spec: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    ids: set[str] = set()
+    for item in spec.get("items", []):
+        item_id = item.get("id")
+        if not item_id:
+            errors.append("A layout item is missing its id.")
+        elif item_id in ids:
+            errors.append(f"Duplicate layout item id: {item_id}")
+        else:
+            ids.add(item_id)
+        for key in ("x", "y", "width", "height"):
+            value = item.get(key)
+            if not isinstance(value, (int, float)) or value < 0:
+                errors.append(f"{item_id or 'item'} has invalid {key}.")
+        if item.get("geometry_status") not in {"registered", "reference_raster", "placeholder"}:
+            errors.append(f"{item_id or 'item'} has invalid geometry_status.")
+    return errors
+
+
+def create_layout_svg(spec: dict[str, Any], repo_root: Path, output: Path) -> None:
+    errors = validate_layout(spec)
+    if errors:
+        raise ValueError("; ".join(errors))
+
+    title = html.escape(spec.get("title", "LT_CAD layout review"))
+    order = html.escape(str(spec.get("order_number", "")))
+    parts = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="420mm" height="297mm" '
+        'viewBox="0 0 420 297">',
+        '<rect width="420" height="297" fill="white"/>',
+        '<style>text{font-family:Arial,sans-serif;fill:#111}.label{font-size:5px;font-weight:bold}'
+        '.meta{font-size:3.5px}.placeholder{fill:#f4f4f4;stroke:#555;stroke-width:.5;stroke-dasharray:3 2}'
+        '.frame{fill:none;stroke:#111;stroke-width:.5}'
+        '.component path{vector-effect:non-scaling-stroke;stroke-width:.32!important}</style>',
+        f'<text x="15" y="14" font-size="7" font-weight="bold">{title}</text>',
+        f'<text x="405" y="14" font-size="5" text-anchor="end">Order {order}</text>',
+        '<line x1="15" y1="18" x2="405" y2="18" stroke="#111" stroke-width=".5"/>',
+        '<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>',
+    ]
+    for connection in spec.get("connections", []):
+        points = " ".join(f'{point[0]},{point[1]}' for point in connection["points"])
+        colour = connection["colour"]
+        dash = ' stroke-dasharray="3 2"' if connection.get("status") != "confirmed" else ""
+        parts.append(
+            f'<polyline points="{points}" fill="none" stroke="{colour}" stroke-width="1.4"'
+            f'{dash} marker-end="url(#arrow)"/>'
+        )
+        if connection.get("label"):
+            lx, ly = connection.get("label_at", connection["points"][0])
+            parts.append(
+                f'<text class="meta" x="{lx}" y="{ly}" fill="{colour}" '
+                f'style="fill:{colour}">{html.escape(connection["label"])}</text>'
+            )
+    for item in spec["items"]:
+        x, y = item["x"], item["y"]
+        width, height = item["width"], item["height"]
+        label = html.escape(item["label"])
+        if item["geometry_status"] == "registered":
+            source = repo_root / item["preview"]
+            parts.append(_nested_svg(source, x, y, width, height))
+        elif item["geometry_status"] == "reference_raster":
+            source = repo_root / item["preview"]
+            parts.append(_raster_b64(source, x, y, width, height))
+        else:
+            parts.append(
+                f'<rect class="placeholder" x="{x}" y="{y}" width="{width}" height="{height}"/>'
+            )
+            parts.append(
+                f'<text class="meta" x="{x + width / 2}" y="{y + height / 2}" '
+                'text-anchor="middle">VIEW PENDING</text>'
+            )
+        parts.append(
+            f'<text class="label" x="{x + width / 2}" y="{y + height + 7}" '
+            f'text-anchor="middle">{label}</text>'
+        )
+
+    parts.extend(
+        [
+            '<rect x="15" y="238" width="390" height="38" fill="#fff8d7" stroke="#b78b00" stroke-width=".4"/>',
+            '<text x="20" y="247" font-size="4.5" font-weight="bold">DESIGN REVIEW - PIPING NOT RELEASED</text>',
+        ]
+    )
+    for index, note in enumerate(spec.get("review_notes", [])):
+        parts.append(
+            f'<text class="meta" x="20" y="{255 + index * 6}">• {html.escape(note)}</text>'
+        )
+    parts.extend(
+        [
+            '<rect class="frame" x="5" y="5" width="410" height="287"/>',
+            '<text class="meta" x="405" y="288" text-anchor="end">Generated by LT_CAD - layout review</text>',
+            '</svg>',
+        ]
+    )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("".join(parts), encoding="utf-8")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("spec", type=Path)
+    parser.add_argument("output", type=Path)
+    parser.add_argument("--repo-root", type=Path, default=Path("."))
+    return parser
+
+
+def main() -> None:
+    args = build_parser().parse_args()
+    spec = json.loads(args.spec.read_text(encoding="utf-8"))
+    create_layout_svg(spec, args.repo_root, args.output)
+
+
+if __name__ == "__main__":
+    main()

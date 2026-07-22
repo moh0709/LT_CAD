@@ -1,0 +1,78 @@
+{
+  "schema_version": "0.1.0",
+  "order_number": "1094811",
+  "source_file": "1094811 Quotation_prysmian_gron_dryinhg.pdf",
+  "quotation_date": "2025-07-11",
+  "currency": "EUR",
+  "customer": "SIFEM ONLY PROJECTS",
+  "items": [
+    {
+      "position": 1,
+      "item_number": "101913",
+      "description": "Desi. Flex Dryer, DFD 450, Lab Dry, 3~400V 50Hz",
+      "quantity": 1,
+      "type": "component",
+      "family": "DFD",
+      "model": "DFD450",
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 2,
+      "item_number": "101912",
+      "description": "Desi. Flex Dryer, DFD 300, Lab Dry, 3~400V 50Hz",
+      "quantity": 1,
+      "type": "component",
+      "family": "DFD",
+      "model": "DFD300",
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 3,
+      "item_number": "208661",
+      "description": "Pipe system, DFD300-450",
+      "quantity": 1,
+      "type": "pipe_system",
+      "system_for": ["DFD300", "DFD450"],
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 4,
+      "item_number": "101633",
+      "description": "Drying Hopper, DH 2000-III, Industry, incl. frame, control, heating, access door",
+      "quantity": 1,
+      "type": "component",
+      "family": "DH",
+      "model": "DH2000-III",
+      "technical_data": {
+        "capacity_kg_per_h_approx": 300,
+        "drying_temperature_c": 75,
+        "bulk_density_kg_per_l": 1.4,
+        "target_humidity_ppm": 285,
+        "drying_time_h": "6-8"
+      },
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 5,
+      "item_number": "101409",
+      "description": "Con-Evator, SVR26/LT5-I, 3~50Hz 400V, ø38/ø50",
+      "quantity": 1,
+      "type": "component",
+      "family": "SVR_LT_ASSEMBLY",
+      "model": "SVR26/LT5-I",
+      "subcomponents": [
+        {"family": "SVR", "model": "SVR26"},
+        {"family": "LT", "model": "LT5-I"}
+      ],
+      "source_page": 1,
+      "confidence": 1.0
+    }
+  ],
+  "excluded_non_item_text": [
+    "Volatile Trap in return Air Piping system - presented as unpriced option text (quantity 0.0)"
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "rules_version": "0.1.0",
+  "line_classes": {
+    "vacuum_air": {
+      "colour": "#35C4CF",
+      "description": "Vacuum conveying air",
+      "confirmed_direction": "SVR to LT",
+      "nominal_draw_width_mm": 1.5
+    },
+    "dried_material": {
+      "colour": "#D52AA3",
+      "description": "Dried material under vacuum conveying",
+      "nominal_draw_width_mm": 1.5
+    },
+    "undried_material": {
+      "colour": "#42A846",
+      "description": "Undried material",
+      "nominal_draw_width_mm": 1.5
+    },
+    "gravity_dried_material": {
+      "colour": "#D52AA3",
+      "description": "Dried material from DH into catchbox",
+      "nominal_draw_width_mm": 1.5
+    },
+    "discharge": {
+      "colour": "#D52AA3",
+      "description": "Receiver discharge into destination equipment",
+      "nominal_draw_width_mm": 1.5
+    },
+    "drying_air": {
+      "colour": "#222222",
+      "description": "Closed process-air circuit between DFD and DH"
+    }
+  },
+  "connection_rules": [
+    {
+      "id": "con-evator-vacuum-return",
+      "medium": "vacuum_air",
+      "source_families": ["SVR"],
+      "target_families": ["LT"],
+      "assembly_type": "Con-Evator",
+      "cardinality": "one_to_one",
+      "status": "confirmed"
+    },
+    {
+      "id": "microscan-vacuum-return",
+      "medium": "vacuum_air",
+      "source_families": ["SVR"],
+      "target_families": ["SVS"],
+      "assembly_type": "Micro Scan",
+      "cardinality": "many_to_one",
+      "status": "confirmed"
+    },
+    {
+      "id": "hopper-to-catchbox",
+      "medium": "gravity_dried_material",
+      "source_families": ["DH"],
+      "target_families": ["CATCHBOX"],
+      "status": "confirmed"
+    },
+    {
+      "id": "catchbox-to-receiver",
+      "medium": "dried_material",
+      "source_families": ["CATCHBOX"],
+      "target_families": ["SVR"],
+      "status": "confirmed"
+    },
+    {
+      "id": "receiver-to-extruder",
+      "medium": "discharge",
+      "source_families": ["SVR"],
+      "target_families": ["EXT"],
+      "status": "confirmed"
+    },
+    {
+      "id": "dfd-to-dh-process-air-supply",
+      "medium": "drying_air",
+      "source_families": ["DFD"],
+      "target_families": ["DH"],
+      "status": "confirmed"
+    },
+    {
+      "id": "dh-to-dfd-process-air-return",
+      "medium": "drying_air",
+      "source_families": ["DH"],
+      "target_families": ["DFD"],
+      "status": "confirmed"
+    }
+  ],
+  "network_rules": [
+    {
+      "id": "shared-vacuum-header",
+      "medium": "vacuum_air",
+      "topology": "shared_header",
+      "branch_connection": "tee",
+      "one_branch_per_SVR": true,
+      "shared_target_family": "SVS",
+      "status": "confirmed"
+    }
+  ],
+  "node_requirements": [
+    {
+      "family": "CATCHBOX",
+      "incoming": [
+        {"medium": "gravity_dried_material", "other_family": "DH"}
+      ],
+      "outgoing": [
+        {"medium": "dried_material", "other_family": "SVR"}
+      ]
+    },
+    {
+      "family": "SVR",
+      "outgoing": [
+        {"medium": "vacuum_air", "other_families": ["LT", "SVS"]},
+        {"medium": "discharge", "other_family": "EXT"}
+      ]
+    },
+    {
+      "family": "SVS",
+      "incoming": [
+        {"medium": "vacuum_air", "other_family": "SVR"}
+      ]
+    }
+  ],
+  "symbol_rules": [
+    {
+      "family": "LT",
+      "models": ["LT3", "LT4", "LT5", "LT6"],
+      "graphic_policy": "shared_symbol_model_specific_label",
+      "status": "confirmed"
+    },
+    {
+      "family": "SVS",
+      "models": ["SVS-I/LT5-I", "SVS-I/LT6-I"],
+      "graphic_policy": "micro_scan_station_shared_by_scanning_receivers",
+      "status": "confirmed"
+    }
+  ]
+}

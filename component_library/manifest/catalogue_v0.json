@@ -1,0 +1,79 @@
+{
+  "catalogue_version": "0.1.0",
+  "source": {
+    "file_name": "Tegnings oversigt.dxf",
+    "format": "DXF R2004",
+    "units": "mm",
+    "sha256": "f8dc45119c471fca42113e97cd39614a80ec5c2f05ec6732a71282f9040cf73e"
+  },
+  "inventory": {
+    "file_size_bytes": 397992934,
+    "modelspace_entities": 771477,
+    "blocks": 2104,
+    "layers": 97,
+    "insert_references": 999,
+    "unique_inserted_blocks": 575
+  },
+  "components": [
+    {
+      "id": "dfd-family",
+      "family": "DFD",
+      "model": null,
+      "view": null,
+      "status": "needs_review",
+      "candidate_blocks": ["dfd1", "A$C442E5DFD"],
+      "anchors": [],
+      "notes": "dfd1 rendered as control/symbol geometry and is not approved as the cabinet view. Locate the preferred DFD side/front geometry in model space."
+    },
+    {
+      "id": "dh-family",
+      "family": "DH",
+      "model": null,
+      "view": null,
+      "status": "needs_review",
+      "candidate_blocks": ["DH2000-III_T", "DH6000-III_T", "DH600-III_b"],
+      "anchors": [],
+      "notes": "DH2000-III_T is a top view. A preferred front-view principle symbol must be selected or extracted."
+    },
+    {
+      "id": "svr26-front",
+      "family": "SVR",
+      "model": "SVR26",
+      "view": "front_candidate",
+      "status": "needs_review",
+      "candidate_blocks": ["svr26", "svr26-s"],
+      "anchors": [],
+      "notes": "Detailed vector geometry renders successfully. Material and vacuum-air anchors require approval."
+    },
+    {
+      "id": "lt-family",
+      "family": "LT",
+      "model": null,
+      "view": null,
+      "status": "needs_review",
+      "candidate_blocks": ["lt5", "lt6", "lt6-99", "lt699-3", "vac-lt6-cycl", "vaclt6-1"],
+      "anchors": [],
+      "notes": "One approved graphic will represent LT3/LT4/LT5/LT6 variants; the quoted model remains in the label."
+    },
+    {
+      "id": "svs-microscan-reference",
+      "family": "SVS",
+      "model": "SVS-I/LT6-I",
+      "view": "side_reference",
+      "status": "approved",
+      "candidate_blocks": [],
+      "anchors": ["vacuum-header-inlet"],
+      "notes": "User-supplied and approved Micro Scan/SVS reference symbol. It represents the common station used by multiple scanning SVRs and is distinct from a standalone LT blower."
+    },
+    {
+      "id": "wam-family",
+      "family": "WAM",
+      "model": null,
+      "view": "front_candidate",
+      "status": "needs_review",
+      "candidate_blocks": ["wam"],
+      "anchors": [],
+      "notes": "Vector geometry renders successfully. Inlet/outlet anchors and preferred simplification require approval."
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "view_registry_version": "0.1.0",
+  "coordinate_system": {
+    "type": "normalized_2d",
+    "origin": "bottom_left",
+    "range": [0.0, 1.0]
+  },
+  "views": [
+    {
+      "id": "dfd-family-left-side",
+      "family": "DFD",
+      "models": ["DFD300", "DFD450"],
+      "view": "left_side",
+      "source_file": "DFD300-450_side_left.dwg",
+      "source_block": "A$C7B2D2076",
+      "native_extents_mm": {"width": 1283.000, "height": 1562.500},
+      "geometry_status": "approved_family_standard",
+      "anchor_status": "approved",
+      "anchors": [
+        {"id": "drying-air-supply-top", "medium": "drying_air", "circuit_role": "supply", "direction": "out", "side": "top", "x": 0.516, "y": 0.965, "nominal_draw_width": 2.2},
+        {"id": "drying-air-return-top", "medium": "drying_air", "circuit_role": "return", "direction": "in", "side": "top", "x": 0.789, "y": 0.965, "nominal_draw_width": 2.2}
+      ],
+      "review_markers": [],
+      "preview": "../previews/dfd-family-left-side.svg",
+      "notes": "User-approved left-side geometry for the DFD family. The two top anchors form the standard closed drying-air circuit with a DH."
+    },
+    {
+      "id": "dh-family-front",
+      "family": "DH",
+      "models": ["DH800-III"],
+      "view": "front",
+      "source_file": "DH800-III_front_160.dwg",
+      "source_block": "MODEL_SPACE_COMPOSITE",
+      "native_extents_mm": {"width": 1178.761, "height": 3194.499},
+      "geometry_status": "approved_family_standard",
+      "anchor_status": "approved",
+      "allowed_transformations": ["mirror_about_vertical_axis_to_face_dfd"],
+      "anchors": [
+        {"id": "drying-air-return-side", "medium": "drying_air", "circuit_role": "return", "direction": "out", "side": "left", "x": 0.080, "y": 0.885, "nominal_draw_width": 2.2},
+        {"id": "drying-air-supply-side", "medium": "drying_air", "circuit_role": "supply", "direction": "in", "side": "left", "x": 0.080, "y": 0.650, "nominal_draw_width": 2.2},
+        {"id": "dried-material-discharge-bottom", "medium": "gravity_dried_material", "direction": "out", "side": "bottom", "x": 0.500, "y": 0.020, "nominal_draw_width": 1.5}
+      ],
+      "review_markers": [],
+      "preview": "../previews/dh-family-front.svg",
+      "notes": "Complete DH front geometry extracted from model space, including the standard floor frame. Side anchors mirror together when the DFD changes side."
+    },
+    {
+      "id": "svr-reference-front",
+      "family": "SVR",
+      "models": ["SVR8", "SVR26"],
+      "view": "front_reference",
+      "source_file": "SVR (2).png",
+      "source_block": null,
+      "native_extents_mm": null,
+      "geometry_status": "needs_review",
+      "anchor_status": "approved",
+      "sheet_size_policy": {"type": "fixed", "width_mm": 15, "height_mm": 40},
+      "allowed_transformations": ["mirror_about_vertical_axis"],
+      "anchors": [
+        {"id": "material-side", "medium": "material", "direction": "bidirectional", "side": "right", "x": 0.844, "y": 0.424, "nominal_draw_width": 1.5},
+        {"id": "vacuum-top", "medium": "vacuum_air", "direction": "bidirectional", "side": "right", "x": 0.978, "y": 0.943, "nominal_draw_width": 1.5}
+      ],
+      "review_markers": [],
+      "preview": "../raster/svr.png.b64",
+      "notes": "Canonical reference has right-facing ports. Anchor positions are approved from the material/vacuum port review. Horizontal mirroring switches both ports to the left."
+    },
+    {
+      "id": "catchbox-reference-side",
+      "family": "CATCHBOX",
+      "models": ["CATCHBOX"],
+      "view": "side_reference",
+      "source_file": "catchbox.png",
+      "source_block": null,
+      "native_extents_mm": null,
+      "geometry_status": "needs_review",
+      "anchor_status": "approved",
+      "anchors": [
+        {"id": "material-upper", "medium": "material", "direction": "bidirectional", "side": "right", "x": 1.0, "y": 0.354, "nominal_draw_width": 1.5},
+        {"id": "material-lower", "medium": "material", "direction": "bidirectional", "side": "right", "x": 1.0, "y": 0.212, "nominal_draw_width": 1.5}
+      ],
+      "review_markers": [],
+      "preview": "../raster/catchbox.png.b64",
+      "notes": "Two material connection points approved from the red port review image. Horizontal mirroring is permitted."
+    },
+    {
+      "id": "svs-microscan-reference",
+      "family": "SVS",
+      "models": ["SVS-I/LT5-I", "SVS-I/LT6-I"],
+      "view": "side_reference",
+      "source_file": "SVS.png",
+      "source_block": null,
+      "native_extents_mm": null,
+      "geometry_status": "approved",
+      "anchor_status": "approved",
+      "sheet_size_policy": {"type": "fixed", "width_mm": 30, "height_mm": 20},
+      "anchors": [
+        {"id": "vacuum-header-inlet", "medium": "vacuum_air", "direction": "in", "side": "top", "x": 0.270, "y": 1.000, "nominal_draw_width": 1.5}
+      ],
+      "review_markers": [],
+      "preview": "../raster/svs.png.b64",
+      "notes": "Approved Micro Scan station reference. The common vacuum header approaches vertically from above and connects to the turquoise top stub already present in the symbol."
+    }
+  ]
+}

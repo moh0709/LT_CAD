@@ -1,0 +1,100 @@
+{
+  "schema_version": "0.1.0",
+  "order_number": "1090052",
+  "source_file": "1090052 Quotation_dfd600.pdf",
+  "quotation_date": "2023-06-01",
+  "currency": "EUR",
+  "customer": "SIFEM",
+  "customer_reference": "Christian Bezou",
+  "agent": "MOH",
+  "items": [
+    {
+      "position": 1,
+      "item_number": "101915",
+      "description": "Desiccant Flex Dryer DFD600, Lab Dry, 3x400V 50Hz",
+      "quantity": 1,
+      "type": "component",
+      "family": "DFD",
+      "model": "DFD600",
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 2,
+      "item_number": "204354",
+      "description": "Pipe system for DFD600",
+      "quantity": 1,
+      "type": "pipe_system",
+      "system_for": ["DFD600", "DH1200-III"],
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 3,
+      "item_number": "101631",
+      "description": "Drying Hopper DH1200-III, including frame, control, heating and access door",
+      "quantity": 1,
+      "type": "component",
+      "family": "DH",
+      "model": "DH1200-III",
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 4,
+      "item_number": "101402",
+      "description": "Con-Evator SVR16/LT4-I, 400V, diameter 60",
+      "quantity": 1,
+      "type": "component",
+      "family": "SVR_LT_ASSEMBLY",
+      "model": "SVR16/LT4-I",
+      "subcomponents": [
+        {"family": "SVR", "model": "SVR16"},
+        {"family": "LT", "model": "LT4-I"}
+      ],
+      "source_page": 1,
+      "confidence": 1.0
+    }
+  ],
+  "design_decisions": [
+    "The quoted Con-Evator is superseded by a user-approved Micro Scan configuration because two SVRs share one vacuum system.",
+    "SVR16 is mounted on the DH1200-III and receives undried material from a customer source.",
+    "A user-approved 50 mm catchbox is mounted below the DH1200-III.",
+    "Dried material is conveyed from the catchbox to a receiver mounted on customer extruder EXT 1.",
+    "Both scanning SVRs connect to one shared vacuum header and Micro Scan SVS-I/LT6-I station.",
+    "The DFD600 and DH1200-III are connected by the standard closed process-air supply and return ducts."
+  ],
+  "design_additions": [
+    {
+      "id": "catchbox-1",
+      "family": "CATCHBOX",
+      "model": "CATCHBOX-50",
+      "quantity": 1,
+      "source": "user_approved_addition",
+      "mounted_below": "DH1200-III"
+    },
+    {
+      "id": "ext-1",
+      "family": "EXT",
+      "model": "EXT 1",
+      "quantity": 1,
+      "source": "customer_equipment"
+    },
+    {
+      "id": "ext-1-svr",
+      "family": "SVR",
+      "model": "SVR16",
+      "quantity": 1,
+      "source": "user_approved_addition",
+      "mounted_on": "ext-1"
+    },
+    {
+      "id": "micro-scan-station-1",
+      "family": "SVS",
+      "model": "SVS-I/LT6-I",
+      "quantity": 1,
+      "source": "user_approved_override",
+      "replaces_quoted_model": "SVR16/LT4-I"
+    }
+  ]
+}

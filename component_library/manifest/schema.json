@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/moh0709/LT_CAD/component.schema.json",
+  "title": "LT_CAD component catalogue",
+  "type": "object",
+  "required": ["catalogue_version", "source", "components"],
+  "properties": {
+    "catalogue_version": {"type": "string"},
+    "source": {
+      "type": "object",
+      "required": ["file_name", "format", "units"],
+      "properties": {
+        "file_name": {"type": "string"},
+        "format": {"type": "string"},
+        "units": {"const": "mm"},
+        "sha256": {"type": "string"}
+      }
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "family", "status", "candidate_blocks", "anchors"],
+        "properties": {
+          "id": {"type": "string"},
+          "family": {"type": "string"},
+          "model": {"type": ["string", "null"]},
+          "view": {"type": ["string", "null"]},
+          "status": {"enum": ["needs_review", "approved", "deprecated"]},
+          "candidate_blocks": {"type": "array", "items": {"type": "string"}},
+          "anchors": {"type": "array"},
+          "notes": {"type": "string"}
+        }
+      }
+    }
+  }
+}
+
