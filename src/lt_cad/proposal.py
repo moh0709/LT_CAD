@@ -458,6 +458,320 @@ def create_con_evator_proposal_svg(
     output.write_text("".join(parts), encoding="utf-8")
 
 
+def create_multiline_con_evator_proposal_svg(
+    quotation: dict[str, Any], repo_root: Path, output: Path
+) -> None:
+    """Render a DFD/DH/EHR system with three independent Con-Evator lines."""
+    validation = validate_quotation(quotation)
+    if validation["errors"]:
+        raise ValueError("; ".join(validation["errors"]))
+
+    dfd = _one_component(quotation, "DFD")
+    dh = _one_component(quotation, "DH")
+    ehr = _one_component(quotation, "EHR")
+    catchbox = _one_component(quotation, "CATCHBOX")
+    lines = quotation.get("conveying_lines", [])
+    if len(lines) != 3:
+        raise ValueError("The multiline proposal currently requires exactly three lines.")
+    for line in lines:
+        if _vacuum_system_for_receiver_count(line["shared_receiver_count"]) != "Con-Evator":
+            raise ValueError(
+                f'Line {line["line"]} shares multiple SVRs and must use Micro Scan.'
+            )
+        if line["blower"] != "LT3":
+            raise ValueError(f'Line {line["line"]} requires its quoted LT3 blower.')
+
+    reference = str(quotation["project_reference"])
+    customer = str(quotation.get("customer") or "TBD")
+    agent = str(quotation.get("agent") or "TBD")
+    date = str(quotation.get("quotation_date") or "TBD")
+
+    layout_rules = json.loads(
+        (repo_root / "rules" / "layout_rules_v0.json").read_text(encoding="utf-8")
+    )
+    views_data = json.loads(
+        (repo_root / "component_library" / "manifest" / "views_v0.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    views = {view["id"]: view for view in views_data["views"]}
+
+    def registered_anchor(view_id: str, anchor_id: str) -> dict[str, Any]:
+        return next(
+            anchor for anchor in views[view_id]["anchors"] if anchor["id"] == anchor_id
+        )
+
+    grid = Grid(layout_rules["grid"]["unit_mm"])
+    svr_policy = layout_rules["component_size_policies"]["SVR"]
+    mount_rules = {
+        rule["host_family"]: rule for rule in layout_rules["mounting_rules"]
+    }
+    boxes = {
+        "dfd": grid.box(45, 110, 35, 50),
+        "ehr": grid.box(85, 85, 20, 75),
+        "dh": grid.box(120, 60, 35, 100),
+        "catchbox": grid.box(130, 135, 20, 35),
+        "machine1": grid.box(195, 120, 35, 40),
+        "lt1": grid.box(235, 140, 20, 20),
+        "machine2": grid.box(260, 120, 35, 40),
+        "lt2": grid.box(300, 140, 20, 20),
+        "machine3": grid.box(325, 120, 35, 40),
+        "lt3": grid.box(365, 140, 20, 20),
+    }
+    for index in range(1, 4):
+        boxes[f"svr{index}"] = grid.mounted_on_top(
+            boxes[f"machine{index}"],
+            svr_policy["width_mm"],
+            svr_policy["height_mm"],
+            host_surface_offset=mount_rules["EXT"][
+                "host_mounting_plane_offset_from_box_top_mm"
+            ],
+        )
+        mount_errors = validate_top_mount(
+            boxes[f"svr{index}"],
+            boxes[f"machine{index}"],
+            host_surface_offset=mount_rules["EXT"][
+                "host_mounting_plane_offset_from_box_top_mm"
+            ],
+        )
+        if mount_errors:
+            raise ValueError(f"Machine {index} SVR mounting invalid: {mount_errors}")
+
+    dh_frame_policy = layout_rules["component_requirements"]["DH"]["frame_symbol"]
+    drying_policy = layout_rules["process_air_circuit"]
+    route_width = layout_rules["conveying_route_style"]["stroke_width_mm"]
+
+    dfd_supply = anchor_point(
+        registered_anchor("dfd-family-left-side", "drying-air-supply-top"),
+        boxes["dfd"].tuple(),
+    )
+    dfd_return = anchor_point(
+        registered_anchor("dfd-family-left-side", "drying-air-return-top"),
+        boxes["dfd"].tuple(),
+    )
+    dh_supply = anchor_point(
+        registered_anchor("dh-family-front", "drying-air-supply-side"),
+        boxes["dh"].tuple(),
+    )
+    dh_return = anchor_point(
+        registered_anchor("dh-family-front", "drying-air-return-side"),
+        boxes["dh"].tuple(),
+    )
+
+    ehr_left = (boxes["ehr"].x, dh_supply[1])
+    ehr_right = (boxes["ehr"].right, dh_supply[1])
+    supply_before_ehr = [
+        dfd_supply,
+        (dfd_supply[0], dh_supply[1]),
+        ehr_left,
+    ]
+    supply_after_ehr = [ehr_right, dh_supply]
+    supply_for_arrow = [dfd_supply, (dfd_supply[0], dh_supply[1]), dh_supply]
+    return_route = [dh_return, (dfd_return[0], dh_return[1]), dfd_return]
+    supply_arrow = route_direction_arrow(supply_for_arrow)
+    return_arrow = route_direction_arrow(return_route)
+
+    catchbox_upper = anchor_point(
+        registered_anchor("catchbox-reference-side", "material-upper"),
+        boxes["catchbox"].tuple(),
+    )
+    catchbox_lower = anchor_point(
+        registered_anchor("catchbox-reference-side", "material-lower"),
+        boxes["catchbox"].tuple(),
+    )
+    catchbox_middle = (
+        catchbox_upper[0],
+        (catchbox_upper[1] + catchbox_lower[1]) / 2,
+    )
+    catchbox_ports = [catchbox_upper, catchbox_middle, catchbox_lower]
+    approach_x = [190, 258, 323]
+    below_floor_y = [170, 180, 190]
+    vacuum_riser_x = [190, 255, 320]
+    vacuum_level_y = [50, 40, 30]
+
+    dried_routes: list[list[tuple[float, float]]] = []
+    vacuum_routes: list[list[tuple[float, float]]] = []
+    for index in range(1, 4):
+        material_port = anchor_point(
+            registered_anchor("svr-reference-front", "material-side"),
+            boxes[f"svr{index}"].tuple(),
+            mirror_x=True,
+        )
+        vacuum_port = anchor_point(
+            registered_anchor("svr-reference-front", "vacuum-top"),
+            boxes[f"svr{index}"].tuple(),
+            mirror_x=True,
+        )
+        lt_port = (
+            boxes[f"lt{index}"].x + boxes[f"lt{index}"].width * 0.25,
+            boxes[f"lt{index}"].y,
+        )
+        dried_routes.append(
+            [
+                catchbox_ports[index - 1],
+                (165 + (index - 1) * 5, catchbox_ports[index - 1][1]),
+                (165 + (index - 1) * 5, below_floor_y[index - 1]),
+                (approach_x[index - 1], below_floor_y[index - 1]),
+                (approach_x[index - 1], material_port[1]),
+                material_port,
+            ]
+        )
+        vacuum_routes.append(
+            [
+                vacuum_port,
+                (vacuum_riser_x[index - 1], vacuum_port[1]),
+                (vacuum_riser_x[index - 1], vacuum_level_y[index - 1]),
+                (lt_port[0], vacuum_level_y[index - 1]),
+                lt_port,
+            ]
+        )
+
+    obstacles = {name: box.tuple() for name, box in boxes.items()}
+    for index, points in enumerate(dried_routes, start=1):
+        collisions = route_collisions(
+            points,
+            obstacles,
+            ignore={"catchbox", "dh", f"svr{index}"},
+            clearance=1,
+        )
+        if collisions:
+            raise ValueError(
+                f"Dried-material line {index} crosses component borders: {collisions}"
+            )
+    for index, points in enumerate(vacuum_routes, start=1):
+        collisions = route_collisions(
+            points,
+            obstacles,
+            ignore={f"svr{index}", f"lt{index}"},
+            clearance=1,
+        )
+        if collisions:
+            raise ValueError(f"Vacuum line {index} crosses component borders: {collisions}")
+
+    def duct(points: list[tuple[float, float]], route_id: str) -> str:
+        path = rounded_orthogonal_path(points, drying_policy["bend_radius_mm"])
+        return (
+            f'<path data-route="{route_id}" d="{path}" class="process-air" '
+            f'stroke="#222" stroke-width="{drying_policy["outer_line_width_mm"]}"/>'
+            f'<path d="{path}" class="process-air" stroke="white" '
+            f'stroke-width="{drying_policy["inner_line_width_mm"]}"/>'
+        )
+
+    parts = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="420mm" height="297mm" viewBox="0 0 420 297">',
+        '<rect width="420" height="297" fill="white"/>',
+        '<style>text{font-family:Arial,sans-serif;fill:#111}.component path{vector-effect:non-scaling-stroke;stroke-width:.28!important}.equipment{font-size:3.5px;font-weight:bold}.small{font-size:3px}.tiny{font-size:2.4px}.legend{font-size:3.1px}.callout-circle{fill:white;stroke:#ff3030;stroke-width:.35}.callout-line{stroke:#ff3030;stroke-width:.35}.callout-number{font-size:4px;fill:#ff3030;text-anchor:middle}.title{font-size:4.5px}.route{fill:none;stroke-linejoin:round}.process-air{fill:none;stroke-linecap:butt;stroke-linejoin:round}.ground{stroke:#111;stroke-width:.45}.note-box{fill:#fff8d7;stroke:#b78b00;stroke-width:.35}</style>',
+        '<defs><marker id="arrow-process" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#222"/></marker></defs>',
+        '<line x1="35" y1="160" x2="395" y2="160" class="ground"/>',
+        '<path d="' + ' '.join(f'M{x} 159 l-4 6' for x in range(38, 396, 8)) + '" stroke="#777" stroke-width=".3" fill="none"/>',
+        _nested_svg(repo_root / "component_library/previews/dfd-family-left-side.svg", *boxes["dfd"].tuple()),
+        _nested_svg(repo_root / "component_library/previews/ehr-reference.svg", *boxes["ehr"].tuple()),
+        _nested_svg(repo_root / "component_library/previews/dh-family-front.svg", *boxes["dh"].tuple()),
+        _dh_floor_frame(boxes["dh"], dh_frame_policy),
+        _raster_b64(repo_root / "component_library/raster/catchbox.png.b64", *boxes["catchbox"].tuple()),
+    ]
+    for index in range(1, 4):
+        parts.extend(
+            [
+                _nested_svg(
+                    repo_root / "component_library/previews/customer-machine-reference.svg",
+                    *boxes[f"machine{index}"].tuple(),
+                ),
+                _raster_b64(
+                    repo_root / "component_library/raster/svr.png.b64",
+                    *boxes[f"svr{index}"].tuple(),
+                    mirror_x=True,
+                ),
+                _raster_b64(
+                    repo_root / "component_library/raster/lt-family.png.b64",
+                    *boxes[f"lt{index}"].tuple(),
+                ),
+            ]
+        )
+    parts.extend(
+        [
+            duct(supply_before_ehr, "drying-air-supply-before-ehr"),
+            duct(supply_after_ehr, "drying-air-supply-after-ehr"),
+            duct(return_route, "drying-air-return"),
+            f'<line data-flow-arrow="drying-air-supply" x1="{supply_arrow[0][0]}" y1="{supply_arrow[0][1]}" x2="{supply_arrow[1][0]}" y2="{supply_arrow[1][1]}" stroke="#555" stroke-width=".4" marker-end="url(#arrow-process)"/>',
+            f'<line data-flow-arrow="drying-air-return" x1="{return_arrow[0][0]}" y1="{return_arrow[0][1]}" x2="{return_arrow[1][0]}" y2="{return_arrow[1][1]}" stroke="#555" stroke-width=".4" marker-end="url(#arrow-process)"/>',
+        ]
+    )
+    for index, points in enumerate(dried_routes, start=1):
+        parts.append(
+            f'<path data-route="dried-material-line-{index}" d="{rounded_orthogonal_path(points, 4)}" class="route" stroke="#D52AA3" stroke-width="{route_width}"/>'
+        )
+    for index, points in enumerate(vacuum_routes, start=1):
+        parts.append(
+            f'<path data-route="vacuum-line-{index}" d="{rounded_orthogonal_path(points, 4)}" class="route" stroke="#35C4CF" stroke-width="{route_width}"/>'
+        )
+    parts.extend(
+        [
+            '<text x="62.5" y="166" class="equipment" text-anchor="middle">DFD450</text>',
+            '<text x="95" y="166" class="equipment" text-anchor="middle">EHR-100</text>',
+            '<text x="137.5" y="166" class="equipment" text-anchor="middle">DH1600</text>',
+            '<text x="137.5" y="171" class="tiny" text-anchor="middle">PA6 / 210 kg/h / 80 C / 4.0 h</text>',
+            '<text x="140" y="181" class="equipment" text-anchor="middle">CATCHBOX 3 x Ø50 mm</text>',
+        ]
+    )
+    machine_centers = [212.5, 277.5, 342.5]
+    lt_centers = [245, 310, 375]
+    for index, line in enumerate(lines, start=1):
+        parts.extend(
+            [
+                f'<text x="{machine_centers[index - 1]}" y="76" class="equipment" text-anchor="middle">SVR 75 L</text>',
+                f'<text x="{machine_centers[index - 1]}" y="166" class="equipment" text-anchor="middle">{html.escape(line["destination"])}</text>',
+                f'<text x="{machine_centers[index - 1]}" y="171" class="tiny" text-anchor="middle">PA6 {line["throughput_kg_h"]} kg/h</text>',
+                f'<text x="{lt_centers[index - 1]}" y="166" class="equipment" text-anchor="middle">LT3</text>',
+                f'<text x="{machine_centers[index - 1]}" y="176" class="tiny" text-anchor="middle">Ø50 / 30 m / 2 bends</text>',
+            ]
+        )
+    parts.extend(
+        [
+            _callout(1, 40, 100, 58, 118),
+            _callout(2, 117, 50, 129, 78),
+            _callout(3, 82, 74, 91, 96),
+            _callout(4, 160, 135, 145, 150),
+            _callout(5, 190, 75, 204, 92),
+            _callout(5, 255, 65, 269, 92),
+            _callout(5, 320, 55, 334, 92),
+            _callout(5, 255, 132, 244, 146),
+            _callout(5, 320, 122, 309, 146),
+            _callout(5, 390, 112, 374, 146),
+            '<g class="legend">',
+            '<circle cx="20" cy="199" r="5" class="callout-circle"/><text x="20" y="200.5" class="callout-number">1</text><text x="30" y="200.5">Desiccant Flex Dryer DFD450</text>',
+            '<circle cx="20" cy="209" r="5" class="callout-circle"/><text x="20" y="210.5" class="callout-number">2</text><text x="30" y="210.5">Drying Hopper DH1600 with frame</text>',
+            '<circle cx="20" cy="219" r="5" class="callout-circle"/><text x="20" y="220.5" class="callout-number">3</text><text x="30" y="220.5">External Heat Recovery EHR-100</text>',
+            '<circle cx="20" cy="229" r="5" class="callout-circle"/><text x="20" y="230.5" class="callout-number">4</text><text x="30" y="230.5">Catchbox, manual, 3 x 50 mm</text>',
+            '<circle cx="20" cy="239" r="5" class="callout-circle"/><text x="20" y="240.5" class="callout-number">5</text><text x="30" y="240.5">3 x Con-Evator SVR 75 L / LT3</text>',
+            '</g>',
+            '<g class="small"><text x="168" y="207">Route Description</text><line x1="168" y1="214" x2="191" y2="214" stroke="#35C4CF" stroke-width="1.5"/><text x="196" y="215">3 independent vacuum lines</text><line x1="168" y1="222" x2="191" y2="222" stroke="#D52AA3" stroke-width="1.5"/><text x="196" y="223">3 dried-material lines</text><line x1="168" y1="230" x2="191" y2="230" stroke="#222" stroke-width="2.2"/><line x1="168" y1="230" x2="191" y2="230" stroke="white" stroke-width="1.4"/><text x="196" y="231">Closed process-air circuit</text></g>',
+            '<rect x="300" y="198" width="105" height="39" rx="2" class="note-box"/>',
+            '<text x="305" y="206" class="small" font-weight="bold">QUOTED AUXILIARIES</text>',
+            '<text x="305" y="214" class="small">Cyclone 10 L Ø50 mm</text>',
+            '<text x="305" y="222" class="small">Self-purifying filter Ø50 mm</text>',
+            '<text x="305" y="230" class="tiny">Exact placement pending confirmation.</text>',
+            '<rect x="5" y="250" width="410" height="42" fill="white" stroke="#111" stroke-width=".45"/>',
+            '<rect x="5" y="250" width="125" height="42" fill="white" stroke="#111" stroke-width=".45"/>',
+            '<text x="14" y="268" font-size="14" fill="#063ee8" style="fill:#063ee8;font-weight:bold;font-style:italic">Labotek</text>',
+            '<text x="35" y="276" font-size="5">Power in Plastics</text>',
+            '<line x1="130" y1="264" x2="415" y2="264" stroke="#111" stroke-width=".35"/>',
+            '<line x1="130" y1="278" x2="415" y2="278" stroke="#111" stroke-width=".35"/>',
+            f'<text x="133" y="258" class="small">Customer: {html.escape(customer)}</text>',
+            '<text x="133" y="262.5" class="title">Description: Principle Sketch - DFD450 / DH1600 / 3-line conveying</text>',
+            f'<text x="133" y="271" class="small">Agent: {html.escape(agent)}</text>',
+            f'<text x="320" y="271" class="small">Date: {html.escape(date)}</text>',
+            '<text x="380" y="271" class="small">Scale: NTS</text>',
+            '<text x="133" y="286" class="small">Source: Labotek Studio quotation - DRAFT</text>',
+            f'<text x="285" y="288" font-size="7">{html.escape(reference.replace("-", "_"))}_1_R00</text>',
+            '</svg>',
+        ]
+    )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("".join(parts), encoding="utf-8")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("quotation", type=Path)
@@ -470,7 +784,16 @@ def main() -> None:
     args = build_parser().parse_args()
     quotation = json.loads(args.quotation.read_text(encoding="utf-8"))
     families = {item.get("family") for item in quotation.get("items", [])}
-    if "SVR_LT_ASSEMBLY" in families:
+    assembly_quantity = sum(
+        int(item.get("quantity", 0))
+        for item in quotation.get("items", [])
+        if item.get("family") == "SVR_LT_ASSEMBLY"
+    )
+    if assembly_quantity > 1 and quotation.get("conveying_lines"):
+        create_multiline_con_evator_proposal_svg(
+            quotation, args.repo_root, args.output
+        )
+    elif "SVR_LT_ASSEMBLY" in families:
         create_con_evator_proposal_svg(quotation, args.repo_root, args.output)
     else:
         create_drying_proposal_svg(quotation, args.repo_root, args.output)

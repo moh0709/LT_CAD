@@ -1,0 +1,158 @@
+{
+  "schema_version": "0.1.0",
+  "project_reference": "LABOTEK-STUDIO-QT",
+  "source_file": "Labotek Studio_qt.pdf",
+  "quotation_date": "2026-07-22",
+  "status": "draft_subject_to_confirmation",
+  "currency": "EUR",
+  "customer": "TBD",
+  "agent": "Labotek Studio",
+  "material": "PA6",
+  "drying_basis": {
+    "throughput_kg_h": 210,
+    "temperature_c": 80,
+    "residence_time_h": 4.0
+  },
+  "items": [
+    {
+      "position": 1,
+      "item_number": "101913",
+      "description": "DFD 450 machine",
+      "quantity": 1,
+      "type": "component",
+      "family": "DFD",
+      "model": "DFD450",
+      "source_page": 2,
+      "confidence": 1.0
+    },
+    {
+      "position": 2,
+      "item_number": "101632",
+      "description": "DH1600 machine",
+      "quantity": 1,
+      "type": "component",
+      "family": "DH",
+      "model": "DH1600",
+      "source_page": 2,
+      "confidence": 1.0
+    },
+    {
+      "position": 3,
+      "item_number": "TBD",
+      "description": "EHR-100 heat recovery machine",
+      "quantity": 1,
+      "type": "component",
+      "family": "EHR",
+      "model": "EHR-100",
+      "source_page": 2,
+      "confidence": 1.0
+    },
+    {
+      "position": 4,
+      "item_number": "208042",
+      "description": "Catchbox DH15-12000, 3 x 50 mm, manual",
+      "quantity": 1,
+      "type": "component",
+      "family": "CATCHBOX",
+      "model": "CATCHBOX-3X50-MANUAL",
+      "source_page": 2,
+      "confidence": 1.0
+    },
+    {
+      "position": 5,
+      "item_number": "TBD",
+      "description": "SVR 75 L with dedicated Labotek LT3 blower",
+      "quantity": 3,
+      "type": "component",
+      "family": "SVR_LT_ASSEMBLY",
+      "model": "SVR75/LT3",
+      "subcomponents": [
+        {"family": "SVR", "model": "SVR 75 L"},
+        {"family": "LT", "model": "LT3"}
+      ],
+      "source_page": 2,
+      "confidence": 1.0
+    },
+    {
+      "position": 6,
+      "item_number": "408201/501304/544015",
+      "description": "Three independent Ø50 mm conveying pipe systems, each 30 m with 2 bends",
+      "quantity": 3,
+      "type": "pipe_system",
+      "diameter_mm": 50,
+      "length_m_each": 30,
+      "bends_each": 2,
+      "quoted_pipe_sections_6m_total": 15,
+      "quoted_couplings_total": 30,
+      "quoted_bends_total": 12,
+      "source_page": 1,
+      "confidence": 1.0
+    },
+    {
+      "position": 7,
+      "item_number": "204539",
+      "description": "Cyclone 10 L Ø50 mm",
+      "quantity": 1,
+      "type": "option",
+      "placement_status": "pending_confirmation",
+      "source_page": 2,
+      "confidence": 1.0
+    },
+    {
+      "position": 8,
+      "item_number": "208105",
+      "description": "Self-purifying filter LT3-LT6 Ø50 mm",
+      "quantity": 1,
+      "type": "option",
+      "placement_status": "pending_confirmation",
+      "source_page": 2,
+      "confidence": 1.0
+    }
+  ],
+  "conveying_lines": [
+    {
+      "line": 1,
+      "destination": "MACHINE 1",
+      "material": "PA6",
+      "throughput_kg_h": 70,
+      "receiver": "SVR 75 L",
+      "blower": "LT3",
+      "shared_receiver_count": 1,
+      "pipe_diameter_mm": 50,
+      "pipe_length_m": 30,
+      "bends": 2
+    },
+    {
+      "line": 2,
+      "destination": "MACHINE 2",
+      "material": "PA6",
+      "throughput_kg_h": 80,
+      "receiver": "SVR 75 L",
+      "blower": "LT3",
+      "shared_receiver_count": 1,
+      "pipe_diameter_mm": 50,
+      "pipe_length_m": 30,
+      "bends": 2
+    },
+    {
+      "line": 3,
+      "destination": "MACHINE 3",
+      "material": "PA6",
+      "throughput_kg_h": 50,
+      "receiver": "SVR 75 L",
+      "blower": "LT3",
+      "shared_receiver_count": 1,
+      "pipe_diameter_mm": 50,
+      "pipe_length_m": 30,
+      "bends": 2
+    }
+  ],
+  "design_decisions": [
+    "Each SVR 75 L has its own LT3 and is therefore a separate one-to-one Con-Evator.",
+    "No Micro Scan header is permitted because the quotation specifies three LT3 blowers.",
+    "The three manual 50 mm catchbox outlets feed Machine 1, Machine 2 and Machine 3.",
+    "Customer destination machines are shown as generic equipment because their machine types are not stated.",
+    "The principle routes follow the system-layout value of 2 bends per line; the remaining quoted bends are not assigned without layout confirmation.",
+    "Cyclone and filter placement remains pending confirmation."
+  ]
+}
