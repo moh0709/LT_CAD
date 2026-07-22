@@ -112,46 +112,57 @@
   "conveying_lines": [
     {
       "line": 1,
-      "destination": "MACHINE 1",
+      "destination": "EXT 1",
       "material": "PA6",
       "throughput_kg_h": 70,
-      "receiver": "SVR 75 L",
-      "blower": "LT3",
-      "shared_receiver_count": 1,
+      "receiver": "SVR8",
+      "blower": "SHARED LT4",
+      "shared_receiver_count": 3,
       "pipe_diameter_mm": 50,
       "pipe_length_m": 30,
       "bends": 2
     },
     {
       "line": 2,
-      "destination": "MACHINE 2",
+      "destination": "EXT 2",
       "material": "PA6",
       "throughput_kg_h": 80,
-      "receiver": "SVR 75 L",
-      "blower": "LT3",
-      "shared_receiver_count": 1,
+      "receiver": "SVR8",
+      "blower": "SHARED LT4",
+      "shared_receiver_count": 3,
       "pipe_diameter_mm": 50,
       "pipe_length_m": 30,
       "bends": 2
     },
     {
       "line": 3,
-      "destination": "MACHINE 3",
+      "destination": "EXT 3",
       "material": "PA6",
       "throughput_kg_h": 50,
-      "receiver": "SVR 75 L",
-      "blower": "LT3",
-      "shared_receiver_count": 1,
+      "receiver": "SVR8",
+      "blower": "SHARED LT4",
+      "shared_receiver_count": 3,
       "pipe_diameter_mm": 50,
       "pipe_length_m": 30,
       "bends": 2
     }
   ],
+  "central_conveying_override": {
+    "source": "user_approved_redesign",
+    "system_type": "Micro Scan",
+    "receiver_model": "SVR8",
+    "receiver_quantity": 3,
+    "shared_receiver_count": 3,
+    "central_blower_model": "LT4",
+    "central_blower_quantity": 1,
+    "destination_component": "EXTRUDER"
+  },
   "design_decisions": [
-    "Each SVR 75 L has its own LT3 and is therefore a separate one-to-one Con-Evator.",
-    "No Micro Scan header is permitted because the quotation specifies three LT3 blowers.",
-    "The three manual 50 mm catchbox outlets feed Machine 1, Machine 2 and Machine 3.",
-    "Customer destination machines are shown as generic equipment because their machine types are not stated.",
+    "The original three SVR 75 L and three LT3 arrangement is superseded by a user-approved central conveying redesign.",
+    "Three SVR8 scanning receivers share one vacuum header and one central LT4 blower.",
+    "A shared vacuum source with three SVRs is Micro Scan and must never be represented as Con-Evator.",
+    "The three manual 50 mm catchbox outlets feed EXT 1, EXT 2 and EXT 3.",
+    "The supplied extruder component is used for all three destinations.",
     "The principle routes follow the system-layout value of 2 bends per line; the remaining quoted bends are not assigned without layout confirmation.",
     "Cyclone and filter placement remains pending confirmation."
   ]

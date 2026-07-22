@@ -458,10 +458,10 @@ def create_con_evator_proposal_svg(
     output.write_text("".join(parts), encoding="utf-8")
 
 
-def create_multiline_con_evator_proposal_svg(
+def create_multiline_central_conveying_proposal_svg(
     quotation: dict[str, Any], repo_root: Path, output: Path
 ) -> None:
-    """Render a DFD/DH/EHR system with three independent Con-Evator lines."""
+    """Render a DFD/DH/EHR system with three SVRs and one central blower."""
     validation = validate_quotation(quotation)
     if validation["errors"]:
         raise ValueError("; ".join(validation["errors"]))
@@ -473,13 +473,21 @@ def create_multiline_con_evator_proposal_svg(
     lines = quotation.get("conveying_lines", [])
     if len(lines) != 3:
         raise ValueError("The multiline proposal currently requires exactly three lines.")
+    central = quotation.get("central_conveying_override", {})
+    if central.get("receiver_quantity") != 3 or central.get("receiver_model") != "SVR8":
+        raise ValueError("The central design requires exactly three SVR8 receivers.")
+    if central.get("central_blower_quantity") != 1 or central.get("central_blower_model") != "LT4":
+        raise ValueError("The central design requires exactly one LT4 blower.")
+    if (
+        _vacuum_system_for_receiver_count(central.get("shared_receiver_count", 0))
+        != "Micro Scan"
+    ):
+        raise ValueError("Three SVRs on one vacuum source must use Micro Scan.")
     for line in lines:
-        if _vacuum_system_for_receiver_count(line["shared_receiver_count"]) != "Con-Evator":
-            raise ValueError(
-                f'Line {line["line"]} shares multiple SVRs and must use Micro Scan.'
-            )
-        if line["blower"] != "LT3":
-            raise ValueError(f'Line {line["line"]} requires its quoted LT3 blower.')
+        if _vacuum_system_for_receiver_count(line["shared_receiver_count"]) != "Micro Scan":
+            raise ValueError(f'Line {line["line"]} must use the shared Micro Scan system.')
+        if line["blower"] != "SHARED LT4":
+            raise ValueError(f'Line {line["line"]} must use the central LT4 blower.')
 
     reference = str(quotation["project_reference"])
     customer = str(quotation.get("customer") or "TBD")
@@ -512,11 +520,9 @@ def create_multiline_con_evator_proposal_svg(
         "dh": grid.box(120, 60, 35, 100),
         "catchbox": grid.box(130, 135, 20, 35),
         "machine1": grid.box(195, 120, 35, 40),
-        "lt1": grid.box(235, 140, 20, 20),
         "machine2": grid.box(260, 120, 35, 40),
-        "lt2": grid.box(300, 140, 20, 20),
         "machine3": grid.box(325, 120, 35, 40),
-        "lt3": grid.box(365, 140, 20, 20),
+        "lt4": grid.box(375, 140, 20, 20),
     }
     for index in range(1, 4):
         boxes[f"svr{index}"] = grid.mounted_on_top(
@@ -587,10 +593,9 @@ def create_multiline_con_evator_proposal_svg(
     approach_x = [190, 258, 323]
     below_floor_y = [170, 180, 190]
     vacuum_riser_x = [190, 255, 320]
-    vacuum_level_y = [50, 40, 30]
 
     dried_routes: list[list[tuple[float, float]]] = []
-    vacuum_routes: list[list[tuple[float, float]]] = []
+    vacuum_ports: list[tuple[float, float]] = []
     for index in range(1, 4):
         material_port = anchor_point(
             registered_anchor("svr-reference-front", "material-side"),
@@ -602,10 +607,7 @@ def create_multiline_con_evator_proposal_svg(
             boxes[f"svr{index}"].tuple(),
             mirror_x=True,
         )
-        lt_port = (
-            boxes[f"lt{index}"].x + boxes[f"lt{index}"].width * 0.25,
-            boxes[f"lt{index}"].y,
-        )
+        vacuum_ports.append(vacuum_port)
         dried_routes.append(
             [
                 catchbox_ports[index - 1],
@@ -616,15 +618,25 @@ def create_multiline_con_evator_proposal_svg(
                 material_port,
             ]
         )
-        vacuum_routes.append(
-            [
-                vacuum_port,
-                (vacuum_riser_x[index - 1], vacuum_port[1]),
-                (vacuum_riser_x[index - 1], vacuum_level_y[index - 1]),
-                (lt_port[0], vacuum_level_y[index - 1]),
-                lt_port,
-            ]
-        )
+    lt4_port = (
+        boxes["lt4"].x + boxes["lt4"].width * 0.25,
+        boxes["lt4"].y,
+    )
+    vacuum_header = [
+        vacuum_ports[0],
+        (vacuum_riser_x[0], vacuum_ports[0][1]),
+        (vacuum_riser_x[0], 15),
+        (lt4_port[0], 15),
+        lt4_port,
+    ]
+    vacuum_tees = [
+        [
+            vacuum_ports[index],
+            (vacuum_riser_x[index], vacuum_ports[index][1]),
+            (vacuum_riser_x[index], 15),
+        ]
+        for index in range(1, 3)
+    ]
 
     obstacles = {name: box.tuple() for name, box in boxes.items()}
     for index, points in enumerate(dried_routes, start=1):
@@ -638,15 +650,23 @@ def create_multiline_con_evator_proposal_svg(
             raise ValueError(
                 f"Dried-material line {index} crosses component borders: {collisions}"
             )
-    for index, points in enumerate(vacuum_routes, start=1):
+    header_collisions = route_collisions(
+        vacuum_header,
+        obstacles,
+        ignore={"svr1", "lt4"},
+        clearance=1,
+    )
+    if header_collisions:
+        raise ValueError(f"Vacuum header crosses component borders: {header_collisions}")
+    for index, points in enumerate(vacuum_tees, start=2):
         collisions = route_collisions(
             points,
             obstacles,
-            ignore={f"svr{index}", f"lt{index}"},
+            ignore={f"svr{index}"},
             clearance=1,
         )
         if collisions:
-            raise ValueError(f"Vacuum line {index} crosses component borders: {collisions}")
+            raise ValueError(f"Vacuum tee {index} crosses component borders: {collisions}")
 
     def duct(points: list[tuple[float, float]], route_id: str) -> str:
         path = rounded_orthogonal_path(points, drying_policy["bend_radius_mm"])
@@ -674,21 +694,25 @@ def create_multiline_con_evator_proposal_svg(
     for index in range(1, 4):
         parts.extend(
             [
-                _nested_svg(
-                    repo_root / "component_library/previews/customer-machine-reference.svg",
+                '<g data-component="extruder">',
+                _raster_b64(
+                    repo_root / "component_library/raster/extruder.png.b64",
                     *boxes[f"machine{index}"].tuple(),
                 ),
+                '</g>',
                 _raster_b64(
                     repo_root / "component_library/raster/svr.png.b64",
                     *boxes[f"svr{index}"].tuple(),
                     mirror_x=True,
                 ),
-                _raster_b64(
-                    repo_root / "component_library/raster/lt-family.png.b64",
-                    *boxes[f"lt{index}"].tuple(),
-                ),
             ]
         )
+    parts.append(
+        _raster_b64(
+            repo_root / "component_library/raster/lt-family.png.b64",
+            *boxes["lt4"].tuple(),
+        )
+    )
     parts.extend(
         [
             duct(supply_before_ehr, "drying-air-supply-before-ehr"),
@@ -702,9 +726,12 @@ def create_multiline_con_evator_proposal_svg(
         parts.append(
             f'<path data-route="dried-material-line-{index}" d="{rounded_orthogonal_path(points, 4)}" class="route" stroke="#D52AA3" stroke-width="{route_width}"/>'
         )
-    for index, points in enumerate(vacuum_routes, start=1):
+    parts.append(
+        f'<path data-route="vacuum-header" d="{rounded_orthogonal_path(vacuum_header, 4)}" class="route" stroke="#35C4CF" stroke-width="{route_width}"/>'
+    )
+    for index, points in enumerate(vacuum_tees, start=2):
         parts.append(
-            f'<path data-route="vacuum-line-{index}" d="{rounded_orthogonal_path(points, 4)}" class="route" stroke="#35C4CF" stroke-width="{route_width}"/>'
+            f'<path data-route="vacuum-tee-{index}" d="{rounded_orthogonal_path(points, 4)}" class="route" stroke="#35C4CF" stroke-width="{route_width}"/>'
         )
     parts.extend(
         [
@@ -716,17 +743,18 @@ def create_multiline_con_evator_proposal_svg(
         ]
     )
     machine_centers = [212.5, 277.5, 342.5]
-    lt_centers = [245, 310, 375]
     for index, line in enumerate(lines, start=1):
         parts.extend(
             [
-                f'<text x="{machine_centers[index - 1]}" y="76" class="equipment" text-anchor="middle">SVR 75 L</text>',
+                f'<text x="{machine_centers[index - 1]}" y="76" class="equipment" text-anchor="middle">SVR8</text>',
                 f'<text x="{machine_centers[index - 1]}" y="166" class="equipment" text-anchor="middle">{html.escape(line["destination"])}</text>',
                 f'<text x="{machine_centers[index - 1]}" y="171" class="tiny" text-anchor="middle">PA6 {line["throughput_kg_h"]} kg/h</text>',
-                f'<text x="{lt_centers[index - 1]}" y="166" class="equipment" text-anchor="middle">LT3</text>',
                 f'<text x="{machine_centers[index - 1]}" y="176" class="tiny" text-anchor="middle">Ø50 / 30 m / 2 bends</text>',
             ]
         )
+    parts.append(
+        '<text x="385" y="166" class="equipment" text-anchor="middle">CENTRAL LT4</text>'
+    )
     parts.extend(
         [
             _callout(1, 40, 100, 58, 118),
@@ -736,17 +764,15 @@ def create_multiline_con_evator_proposal_svg(
             _callout(5, 190, 75, 204, 92),
             _callout(5, 255, 65, 269, 92),
             _callout(5, 320, 55, 334, 92),
-            _callout(5, 255, 132, 244, 146),
-            _callout(5, 320, 122, 309, 146),
-            _callout(5, 390, 112, 374, 146),
+            _callout(5, 405, 112, 384, 146),
             '<g class="legend">',
             '<circle cx="20" cy="199" r="5" class="callout-circle"/><text x="20" y="200.5" class="callout-number">1</text><text x="30" y="200.5">Desiccant Flex Dryer DFD450</text>',
             '<circle cx="20" cy="209" r="5" class="callout-circle"/><text x="20" y="210.5" class="callout-number">2</text><text x="30" y="210.5">Drying Hopper DH1600 with frame</text>',
             '<circle cx="20" cy="219" r="5" class="callout-circle"/><text x="20" y="220.5" class="callout-number">3</text><text x="30" y="220.5">External Heat Recovery EHR-100</text>',
             '<circle cx="20" cy="229" r="5" class="callout-circle"/><text x="20" y="230.5" class="callout-number">4</text><text x="30" y="230.5">Catchbox, manual, 3 x 50 mm</text>',
-            '<circle cx="20" cy="239" r="5" class="callout-circle"/><text x="20" y="240.5" class="callout-number">5</text><text x="30" y="240.5">3 x Con-Evator SVR 75 L / LT3</text>',
+            '<circle cx="20" cy="239" r="5" class="callout-circle"/><text x="20" y="240.5" class="callout-number">5</text><text x="30" y="240.5">MICRO SCAN: 3 x scanning SVR8 / central LT4</text>',
             '</g>',
-            '<g class="small"><text x="168" y="207">Route Description</text><line x1="168" y1="214" x2="191" y2="214" stroke="#35C4CF" stroke-width="1.5"/><text x="196" y="215">3 independent vacuum lines</text><line x1="168" y1="222" x2="191" y2="222" stroke="#D52AA3" stroke-width="1.5"/><text x="196" y="223">3 dried-material lines</text><line x1="168" y1="230" x2="191" y2="230" stroke="#222" stroke-width="2.2"/><line x1="168" y1="230" x2="191" y2="230" stroke="white" stroke-width="1.4"/><text x="196" y="231">Closed process-air circuit</text></g>',
+            '<g class="small"><text x="168" y="207">Route Description</text><line x1="168" y1="214" x2="191" y2="214" stroke="#35C4CF" stroke-width="1.5"/><text x="196" y="215">Shared vacuum header with T branches</text><line x1="168" y1="222" x2="191" y2="222" stroke="#D52AA3" stroke-width="1.5"/><text x="196" y="223">3 dried-material lines</text><line x1="168" y1="230" x2="191" y2="230" stroke="#222" stroke-width="2.2"/><line x1="168" y1="230" x2="191" y2="230" stroke="white" stroke-width="1.4"/><text x="196" y="231">Closed process-air circuit</text></g>',
             '<rect x="300" y="198" width="105" height="39" rx="2" class="note-box"/>',
             '<text x="305" y="206" class="small" font-weight="bold">QUOTED AUXILIARIES</text>',
             '<text x="305" y="214" class="small">Cyclone 10 L Ø50 mm</text>',
@@ -759,12 +785,12 @@ def create_multiline_con_evator_proposal_svg(
             '<line x1="130" y1="264" x2="415" y2="264" stroke="#111" stroke-width=".35"/>',
             '<line x1="130" y1="278" x2="415" y2="278" stroke="#111" stroke-width=".35"/>',
             f'<text x="133" y="258" class="small">Customer: {html.escape(customer)}</text>',
-            '<text x="133" y="262.5" class="title">Description: Principle Sketch - DFD450 / DH1600 / 3-line conveying</text>',
+            '<text x="133" y="262.5" class="title">Description: Principle Sketch - DFD450 / DH1600 / central conveying</text>',
             f'<text x="133" y="271" class="small">Agent: {html.escape(agent)}</text>',
             f'<text x="320" y="271" class="small">Date: {html.escape(date)}</text>',
             '<text x="380" y="271" class="small">Scale: NTS</text>',
-            '<text x="133" y="286" class="small">Source: Labotek Studio quotation - DRAFT</text>',
-            f'<text x="285" y="288" font-size="7">{html.escape(reference.replace("-", "_"))}_1_R00</text>',
+            '<text x="133" y="286" class="small">Source: Labotek Studio quotation + approved central conveying redesign</text>',
+            f'<text x="285" y="288" font-size="7">{html.escape(reference.replace("-", "_"))}_1_R01</text>',
             '</svg>',
         ]
     )
@@ -790,7 +816,7 @@ def main() -> None:
         if item.get("family") == "SVR_LT_ASSEMBLY"
     )
     if assembly_quantity > 1 and quotation.get("conveying_lines"):
-        create_multiline_con_evator_proposal_svg(
+        create_multiline_central_conveying_proposal_svg(
             quotation, args.repo_root, args.output
         )
     elif "SVR_LT_ASSEMBLY" in families:
